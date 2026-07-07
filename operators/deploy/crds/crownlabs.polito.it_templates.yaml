@@ -219,6 +219,12 @@ spec:
                             limits do correspond to avoid OOMKill issues.
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
+                        otherResources:
+                          additionalProperties:
+                            type: string
+                          description: Extended custom hardware resources required
+                            by the environment (e.g. nvidia.com/gpu).
+                          type: object
                         reservedCPUPercentage:
                           description: |-
                             The percentage of reserved CPU cores, ranging between 1 and 100, with

@@ -28,6 +28,14 @@ type WorkspaceResourceQuota struct {
 	// +kubebuilder:validation:XValidation:rule="quantity(self).compareTo(quantity('1Gi')) >= 0",message="Minimum 1 GB of RAM is required"
 	Memory resource.Quantity `json:"memory"`
 
+	// The maximum amount of disk occupancy required by this Workspace.
+	// +kubebuilder:validation:Optional
+	Disk resource.Quantity `json:"disk,omitempty"`
+
+	// Generic map to handle any extended hardware resources (e.g., nvidia.com/gpu, amd.com/gpu)
+	// without hardcoding specific vendor keys.
+	OtherResources map[string]resource.Quantity `json:"otherResources,omitempty"`
+
 	// The maximum number of concurrent instances required by this Workspace.
 	// +kubebuilder:validation:Minimum:=1
 	Instances int64 `json:"instances"`

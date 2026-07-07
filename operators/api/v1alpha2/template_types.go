@@ -176,6 +176,9 @@ type EnvironmentResources struct {
 	// In case of containers, when this field is not specified, an emptyDir will be
 	// attached to the pod but this could result in data loss whenever the pod dies.
 	Disk resource.Quantity `json:"disk,omitempty"`
+
+	// Extended custom hardware resources required by the environment (e.g. nvidia.com/gpu).
+	OtherResources map[string]string `json:"otherResources,omitempty"`
 }
 
 // ContainerStartupOpts specifies custom startup options for the created container,

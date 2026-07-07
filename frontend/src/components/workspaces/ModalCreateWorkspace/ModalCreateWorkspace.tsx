@@ -14,6 +14,8 @@ export interface WorkspaceEditData {
   cpu: string;
   memory: string;
   instances: number;
+  disk?: string | null;
+  otherResources?: { [key: string]: string } | null;
 }
 
 export interface IModalCreateWorkspaceProps {
@@ -31,6 +33,8 @@ interface WorkspaceFormValues {
   cpu: number;
   memory: number;
   instances: number;
+  disk?: number;
+  otherResources?: { key: string; value: number }[];
 }
 
 const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
@@ -62,6 +66,13 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
         cpu: parseFloat(editWorkspace.cpu),
         memory: convertToGiB(editWorkspace.memory),
         instances: editWorkspace.instances,
+        disk: editWorkspace.disk ? convertToGiB(editWorkspace.disk) : undefined,
+        otherResources: editWorkspace.otherResources 
+          ? Object.entries(editWorkspace.otherResources).map(([k, v]) => ({
+              key: k,
+              value: parseFloat(v as string),
+            }))
+          : [],
       });
     } else if (show && !editWorkspace) {
       form.resetFields();
@@ -77,16 +88,35 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
   const handleSubmit = async (values: WorkspaceFormValues) => {
     setLoading(true);
     try {
+      // Map the form array into a Kubernetes flat string object
+      const otherResourcesMap: { [key: string]: string } = {};
+      values.otherResources?.forEach((res) => {
+        if (res.key && res.value != null) {
+          let k8sKey = res.key;
+          
+          // Translate frontend camelCase keys back to the official Kubernetes format
+          if (res.key === 'nvidiaComGpu') k8sKey = 'nvidia.com/gpu';
+          if (res.key === 'amdComGpu') k8sKey = 'amd.com/gpu';
+          
+          otherResourcesMap[k8sKey] = res.value.toString();
+        }
+      });
+
       if (isEditMode) {
         // Edit mode: use apply mutation with JSON patch
         const autoEnrollValue = normalizeAutoEnroll(values.autoEnroll);
+        
+        // Dynamic array handling both standard and extended resource types safely
         const patchJson = JSON.stringify([
           { op: 'replace', path: '/spec/prettyName', value: values.prettyName },
           { op: 'replace', path: '/spec/autoEnroll', value: autoEnrollValue },
           { op: 'replace', path: '/spec/quota/cpu', value: String(values.cpu) },
           { op: 'replace', path: '/spec/quota/memory', value: `${values.memory}Gi` },
           { op: 'replace', path: '/spec/quota/instances', value: values.instances },
+          { op: 'replace', path: '/spec/quota/disk', value: values.disk ? `${values.disk}Gi` : '0Gi' },
+          { op: 'replace', path: '/spec/quota/otherResources', value: otherResourcesMap },
         ]);
+
         await applyWorkspace({
           variables: {
             name: values.name,
@@ -154,6 +184,8 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
           cpu: 4,
           memory: 8,
           instances: 5,
+          disk: 10,
+          otherResources: []
         }}
       >
         <Form.Item
@@ -208,16 +240,19 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
             cpu: [{ required: true, message: 'Please input CPU quota!' }],
             memory: [{ required: true, message: 'Please input memory quota!' }],
             instances: [{ required: true, message: 'Please input max instances!' }],
+            disk: [{ required: true, message: 'Please input disk quota!' }]
           }}
           limits={{
             cpu: { min: 1, max: 128 },
             memory: { min: 1, max: 512 },
             instances: { min: 1, max: 100 },
+            disk: { min: 0, max: 2048 }
           }}
           tooltips={{
             cpu: 'Maximum number of CPU cores',
             memory: 'Maximum memory in gibibytes',
             instances: 'Maximum number of concurrent instances',
+            disk: 'Maximum disk storage allocation'
           }}
         />
       </Form>

@@ -663,20 +663,19 @@ export const Environment: FC<EnvironmentProps> = ({
           />
         </Form.Item>
 
-        {/* Disk */}
-        {/* TODO: The minimum disk size should be dynamically set based on the VM image metadata. Right now, if instance is a VM, min 10; otherwise minimum 1 */}
-        <Form.Item {...restField} name={[name, 'disk']}
-          label={<>Disk <Tooltip title="Amount of disk space allocated to the environment, if persistent"><InfoCircleOutlined className='ml-1' /></Tooltip></>}
-          {...propInputField} >
-          <InputNumber
-            step={1}
-            style={{ width: "120px", textAlignLast: "center" }}
-            addonAfter="GiB"
-            disabled={!isPersistent(name)}
-            max={resources.disk.max}
-            min={getEnvironmentType(name) === EnvironmentType.VirtualMachine ? isPersistent(name) ? resources.disk.min : 0 : 0}
-          />
-        </Form.Item>
+      {/* Disk */}
+      <Form.Item {...restField} name={[name,'disk']} 
+        label={<>Disk <Tooltip title="Amount of disk space allocated to the environment, if persistent"><InfoCircleOutlined className='ml-1' /></Tooltip></>} 
+        {...propInputField} >
+        <InputNumber
+          step={1}
+          style={{ width: "120px", textAlignLast: "center" }}
+          addonAfter="GiB"
+          disabled={!isPersistent(name)}
+          max={resources.disk.max}
+          min={getEnvironmentType(name) === EnvironmentType.VirtualMachine ? isPersistent(name) ? resources.disk.min : 0 : 0}
+        />
+      </Form.Item>
 
         {/* Reserved CPU Percentage */}
         <Form.Item {...restField} name={[name, 'reservedCpu']}
@@ -693,6 +692,40 @@ export const Environment: FC<EnvironmentProps> = ({
         </Form.Item>
       </Space>
 
+      {/* Extended Resources Row Layout */}
+      <Space direction="horizontal" className='ml-2 mb-4'>
+        {/* NVIDIA GPU Quantity Selector */}
+        <Form.Item
+          {...restField}
+          name={[name, 'otherResources', 'nvidiaComGpu']}
+          label={<>NVIDIA GPU <Tooltip title="Number of dedicated NVIDIA GPUs to assign to this environment"><InfoCircleOutlined className='ml-1' /></Tooltip></>}
+          {...propInputField}
+        >
+          <InputNumber
+            step={1}
+            style={{ width: "120px", textAlignLast: "center" }}
+            min={0}
+            max={4}
+            addonAfter="GPU"
+          />
+        </Form.Item>
+
+        {/* AMD GPU Quantity Selector */}
+        <Form.Item
+          {...restField}
+          name={[name, 'otherResources', 'amdComGpu']}
+          label={<>AMD GPU <Tooltip title="Number of dedicated AMD GPUs to assign to this environment"><InfoCircleOutlined className='ml-1' /></Tooltip></>}
+          {...propInputField}
+        >
+          <InputNumber
+            step={1}
+            style={{ width: "120px", textAlignLast: "center" }}
+            min={0}
+            max={4}
+            addonAfter="GPU"
+          />
+        </Form.Item>
+      </Space>
 
       {!isPersonal && (
         <SharedVolumeList parentFormName={name} sharedVolumes={sharedVolumes} />

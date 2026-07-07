@@ -74,13 +74,40 @@ const canCreateInstance = (
 
   const templateCpu = template.resources?.cpu || 0;
   const templateMemory = convertToGiB(template.resources?.memory || '0Gi');
-  // TODO: add this when disk quota is available - const templateDisk = convertToGiB(template.resources?.disk || '0Gi');
+  const templateDisk = convertToGiB(template.resources?.disk || '0Gi');
+
+  // Helper function to match keys agnostically by ignoring case differences (e.g. amdComGpu vs amdcomgpu)
+  const getAvailableExtraResource = (templateKey: string): number => {
+    const sanitize = (s: string) => s.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const targetKey = sanitize(templateKey);
+
+    const quotaOther = (availableQuota as any).otherResources || {};
+    for (const [qKey, qVal] of Object.entries(quotaOther)) {
+      if (sanitize(qKey) === targetKey) return Number(qVal) || 0;
+    }
+    return 0;
+  };
+
+  // Dynamic otherResources quota check
+  let otherResourcesAllowed = true;
+  if ((template as any).otherResources) {
+    for (const [key, val] of Object.entries((template as any).otherResources)) {
+      const required = Number(val) || 0;
+      const available = getAvailableExtraResource(key);
+
+      if (available < required) {
+        otherResourcesAllowed = false;
+        break;
+      }
+    }
+  }
 
   return (
     availableQuota.instances >= 1 &&
     availableQuota.cpu >= templateCpu &&
-    availableQuota.memory >= templateMemory
-    // TODO: add this when disk quota is available - availableQuota.disk >= templateDisk
+    availableQuota.memory >= templateMemory &&
+    availableQuota.disk >= templateDisk &&
+    otherResourcesAllowed
   );
 };
 
@@ -497,6 +524,16 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                         }GiB`
                         : ``}
                     </div>
+                    {template.otherResources &&
+                      Object.entries(template.otherResources).map(([key, val]) => {
+                        const numericVal = Number(val);
+                        return numericVal > 0 ? (
+                          <div key={key}>
+                            {cleanupLabels(key).toUpperCase()}: {numericVal}
+                          </div>
+                        ) : null;
+                      })
+                    }
                   </>
                 )}
               </>
