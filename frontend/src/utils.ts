@@ -48,6 +48,7 @@ export type InstanceResources = {
   cpu: number;
   memory: number;
   disk: number;
+  otherResources?: Record<string, number>;
 };
 
 export type InstanceEnvironment = {
@@ -80,6 +81,7 @@ export type Template = {
     stopAfterInactivity?: string;
     deleteAfterInactivity?: string;
   };
+  otherResources?: Record<string, number> | null;
 };
 
 export type Instance = {
@@ -387,7 +389,7 @@ spec:
     protocol: p.protocol.toUpperCase(), // Ensure uppercase protocol
   }));
 
-  // Build YAML string with correct indentation (names are now sanitized, no quotes needed)
+// Build YAML string with correct indentation (names are now sanitized, no quotes needed)
   const yamlPorts = portsFormatted
     .map(p => {
       return `    - name: ${p.name}

@@ -40,6 +40,8 @@ export default gql`
         }
         metadata {
           name
+          creationTimestamp
+          labels
         }
         status {
           personalNamespace {

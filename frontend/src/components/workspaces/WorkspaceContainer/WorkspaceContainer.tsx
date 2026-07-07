@@ -53,6 +53,11 @@ const WorkspaceContainer: FC<IWorkspaceContainerProps> = ({ ...props }) => {
           cpu: formEnv.cpu,
           reservedCPUPercentage: formEnv.reservedCpu,
           memory: `${formEnv.ram}Gi`,
+          otherResources: Object.fromEntries(
+            Object.entries((formEnv as any).otherResources || {}).map(
+              ([key, val]) => [key, String(val ?? 0)]
+            )
+          ),
         },
         guiEnabled: formEnv.gui,
         // preserve rewriteUrl flag from the form (matches old modal behaviour)
@@ -161,8 +166,13 @@ const WorkspaceContainer: FC<IWorkspaceContainerProps> = ({ ...props }) => {
                   </p>
                 </div>
 
-                {workspace.role === WorkspaceRole.manager && (
-                  <div className="h-full w-18 md:w-24 flex-none flex justify-center items-center">
+                {/* Right Header Side: Displaying QuotaStatus and Action Button */}
+                <div className="h-full flex-none flex justify-center items-center px-4">
+                  <div style={{ marginRight: '64px', display: 'flex', alignItems: 'center' }}>
+                    <QuotaDisplay workspaceName={workspace.name} />
+                  </div>
+                  
+                  {workspace.role === WorkspaceRole.manager && (
                     <Tooltip title="Create template">
                       <Button
                         onClick={() => {
@@ -174,12 +184,8 @@ const WorkspaceContainer: FC<IWorkspaceContainerProps> = ({ ...props }) => {
                         icon={<PlusOutlined />}
                       />
                     </Tooltip>
-                  </div>
-                )}
-              </div>
-
-              <div className="w-full flex-none p-2">
-                <QuotaDisplay workspaceName={workspace.name} />
+                  )}
+                </div>
               </div>
             </div>
           ),
