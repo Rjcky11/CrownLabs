@@ -223,6 +223,7 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
         ...t,
         image: env?.image ?? null,
         environmentType: env?.environmentType ?? null,
+        otherResources: env?.resources?.otherResources ?? null,
       };
     });
   }, [dataTemplate, ownedInstances, templateListData?.templateList?.templates]);
@@ -265,7 +266,17 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
               env.reservedCpu,
             cpu: env.cpu,
             memory: `${env.ram}Gi`,
-            disk: env.disk ? `${env.disk}Gi` : undefined,
+            disk: env.disk ? `${env.disk}Gi` : undefined, 
+            otherResources: Object.fromEntries(
+              Object.entries((env as any).otherResources || {}).map(
+                ([key, val]) => {
+                  let k8sKey = key;
+                  if (key === 'nvidiaComGpu') k8sKey = 'nvidia.com/gpu';
+                  if (key === 'amdComGpu') k8sKey = 'amd.com/gpu';
+                  return [k8sKey, String(val ?? 0)];
+                }
+              )
+            ),
           },
           image: env.image,
           disableControls: env.disableControls,
@@ -394,6 +405,11 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                 editTemplate={(template: Template) => {
                   setUsedTemplate(template);
                   
+
+                  const rawTemplate = templateListData?.templateList?.templates?.find(
+                    t => t?.metadata?.name === template.id
+                  );
+
                   const templateForm: TemplateForm = {
                     name: template.name,
                     nodeSelector: template.nodeSelector,
@@ -420,6 +436,21 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                         }
                       }
 
+                      // Look for original env through e.name
+                      const rawEnv = rawTemplate?.spec?.environmentList?.find(
+                        e => e?.name === env.name
+                      );
+
+                      const parsedOtherResources: Record<string, number> = {};
+                      Object.entries((rawEnv?.resources as any)?.otherResources || {}).forEach(
+                        ([key, val]) => {
+                          let formKey = key;
+                          if (key === 'nvidia.com/gpu') formKey = 'nvidiaComGpu';
+                          if (key === 'amd.com/gpu') formKey = 'amdComGpu';
+                          parsedOtherResources[formKey] = Number(val);
+                        }
+                      );
+
                       return {
                         name: env.name,
                         persistent: env.persistent,
@@ -441,6 +472,7 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                         disableControls: env.disableControls,
                         containerStartupOptions: env.containerStartupOptions,
                         storageClassName: env.storageClassName,
+                        otherResources: parsedOtherResources,
                       };
                     }),
                   };

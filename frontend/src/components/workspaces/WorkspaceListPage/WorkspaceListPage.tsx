@@ -18,6 +18,8 @@ interface WorkspaceData {
   instances: number;
   templateCount: number;
   key: string;
+  disk?: string;
+  otherResources?: { [key: string]: string } | null;
 }
 
 export default function WorkspaceListPage() {
@@ -71,6 +73,8 @@ export default function WorkspaceListPage() {
         cpu: ws?.spec?.quota?.cpu || '0',
         memory: ws?.spec?.quota?.memory || '0Gi',
         instances: ws?.spec?.quota?.instances || 0,
+        disk: (ws?.spec?.quota as any)?.disk || '0Gi',
+        otherResources: (ws?.spec?.quota as any)?.otherResources || null,
         templateCount: templateCountByWorkspace.get(workspaceNamespace) || 0,
         key: workspaceName,
       };
@@ -100,6 +104,8 @@ export default function WorkspaceListPage() {
       cpu: workspace.cpu,
       memory: workspace.memory,
       instances: workspace.instances,
+      disk: workspace.disk,
+      otherResources: workspace.otherResources,
     });
     setShowCreateModal(true);
   };

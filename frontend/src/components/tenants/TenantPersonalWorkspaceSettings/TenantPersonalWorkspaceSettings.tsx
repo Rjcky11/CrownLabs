@@ -20,6 +20,8 @@ interface QuotaFormData {
   cpu?: number;
   memory?: number;
   instances?: number;
+  disk?: number;
+  otherResources?: { key: string; value: number }[];
 }
 
 const TenantPersonalWorkspaceSettings: FC<
@@ -48,14 +50,24 @@ const TenantPersonalWorkspaceSettings: FC<
 
     let newQuota = null;
     if (data.enabled) {
-      if (!data.cpu || !data.memory || !data.instances) {
+      if (!data.cpu || !data.memory || !data.instances || !data.disk) {
         throw new Error('All quota fields must be provided when enabled');
       }
+
+      // Convert form array in a map object
+      const otherResourcesMap: { [key: string]: string } = {};
+      data.otherResources?.forEach((res) => {
+        if (res.key && res.value != null) {
+          otherResourcesMap[res.key] = res.value.toString();
+        }
+      });
 
       newQuota = {
         cpu: data.cpu?.toString() ?? '0',
         memory: `${data.memory?.toString() ?? '0'}Gi`,
         instances: data.instances ?? 0,
+        disk: `${data.disk?.toString() ?? '0'}Gi`,
+        otherResources: otherResourcesMap,
       };
     }
 
@@ -63,7 +75,7 @@ const TenantPersonalWorkspaceSettings: FC<
       variables: {
         tenantId: tenantId,
         patchJson: JSON.stringify([
-          { op: 'replace', path: '/spec/personalWorkspace', value: newQuota },
+          { op: 'add', path: '/spec/personalWorkspace', value: newQuota },
         ]),
         manager: 'frontend-tenant-personal-workspace',
       },
@@ -102,6 +114,8 @@ const TenantPersonalWorkspaceSettings: FC<
     setIsSuccess(false);
     if (data.enabled !== undefined) setIsEnabled(data.enabled);
   };
+  
+  const currentWorkspace = tenant.tenant?.spec?.personalWorkspace as any;
 
   return (
     <Form
@@ -117,6 +131,11 @@ const TenantPersonalWorkspaceSettings: FC<
           tenant.tenant?.spec?.personalWorkspace?.memory ?? '0GiB',
         ),
         instances: tenant.tenant?.spec?.personalWorkspace?.instances ?? 0,
+        disk: convertToGiB(currentWorkspace?.disk ?? '0GiB'),
+        // Convert otherResources object in an array
+        otherResources: currentWorkspace?.otherResources 
+      ? Object.entries(currentWorkspace.otherResources).map(([k, v]) => ({ key: k, value: parseFloat(v as string) }))
+      : [],
       }}
     >
       <Form.Item
@@ -135,11 +154,26 @@ const TenantPersonalWorkspaceSettings: FC<
           cpu: [numberValidator],
           memory: [numberValidator],
           instances: [numberValidator],
+          disk: [numberValidator],
+          otherResources: [
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                // If resource is enabled, values are validated
+                if (!value || value.length === 0) return Promise.resolve();
+                // Check non-negative values
+                if (value.every((res: any) => res.value >= 0)) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(new Error('Resource amounts must be non-negative'));
+              },
+            }),
+          ],
         }}
         limits={{
           cpu: { min: 0 },
           memory: { min: 0 },
           instances: { min: 0 },
+          disk: { min: 0 },
         }}
       />
 

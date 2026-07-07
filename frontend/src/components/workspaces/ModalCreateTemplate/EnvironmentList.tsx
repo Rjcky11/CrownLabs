@@ -22,6 +22,7 @@ const getDefaultEnvironment = (envCount: number): TemplateFormEnv => {
     reservedCpu: 50,
     sharedVolumeMounts: [],
     rewriteUrl: false,
+    otherResources: {},
   };
 };
 
