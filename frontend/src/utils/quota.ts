@@ -19,16 +19,26 @@ export function calculateWorkspaceConsumedQuota(
           cpu: 0,
           memory: 0,
           disk: 0,
+          otherResources: {},
         };
       }
 
-      workspaceUsedResources[instance.workspaceName].instances += 1;
-      workspaceUsedResources[instance.workspaceName].cpu +=
-        instance.resources.cpu;
-      workspaceUsedResources[instance.workspaceName].memory +=
-        instance.resources.memory;
-      workspaceUsedResources[instance.workspaceName].disk +=
-        instance.resources.disk;
+      const current = workspaceUsedResources[instance.workspaceName];
+      current.instances += 1;
+      current.cpu += instance.resources.cpu;
+      current.memory += instance.resources.memory;
+      current.disk += instance.resources.disk;
+
+      if (instance.resources.otherResources) {
+        const extResources = instance.resources.otherResources;
+        
+        if (!current.otherResources) current.otherResources = {};
+        Object.keys(extResources).forEach(key => {
+          current.otherResources![key] =
+            (current.otherResources![key] || 0) +
+            Number(extResources[key]);
+        });
+      }
     });
 
   return workspaceUsedResources;
@@ -55,7 +65,8 @@ export function calculateWorkspaceTotalQuota(
             memory: workspaceQuota?.memory
               ? convertToGiB(workspaceQuota.memory)
               : 0,
-            disk: 0, // TODO: add disk quota when available
+            disk: workspaceQuota?.disk ? convertToGiB(workspaceQuota.disk) : 0,
+            otherResources: workspaceQuota?.otherResources || {},
           },
         };
       },
@@ -64,16 +75,19 @@ export function calculateWorkspaceTotalQuota(
 
   // Add personal workspace quota (if enabled)
   const personalWorkspaceQuota = tenantData?.tenant?.spec?.personalWorkspace;
-  quotas['personal'] = {
-    instances: personalWorkspaceQuota?.instances || 0,
-    cpu: personalWorkspaceQuota?.cpu
-      ? parseFloat(personalWorkspaceQuota?.cpu)
-      : 0,
-    memory: personalWorkspaceQuota?.memory
-      ? convertToGiB(personalWorkspaceQuota?.memory)
-      : 0,
-    disk: 0, // TODO: add disk quota when available
-  };
+  if (personalWorkspaceQuota) {
+    quotas['personal'] = {
+      instances: personalWorkspaceQuota?.instances || 0,
+      cpu: personalWorkspaceQuota?.cpu
+        ? parseFloat(personalWorkspaceQuota?.cpu)
+        : 0,
+      memory: personalWorkspaceQuota?.memory
+        ? convertToGiB(personalWorkspaceQuota?.memory)
+        : 0,
+      disk: personalWorkspaceQuota?.disk ? convertToGiB(personalWorkspaceQuota.disk) : 0,
+      otherResources: personalWorkspaceQuota?.otherResources || {},
+    };
+  }
 
   return quotas;
 }
@@ -85,6 +99,14 @@ export function calculateAvailableQuota(
   const availableQuota: Record<string, IQuota> = {};
 
   for (const workspace in totalQuota) {
+    const totalOther = totalQuota[workspace]?.otherResources || {};
+    const consumedOther = consumedQuota[workspace]?.otherResources || {};
+    const availableOther: Record<string, number> = {};
+
+    Object.keys(totalOther).forEach(key => {
+      availableOther[key] = (totalOther[key] || 0) - (consumedOther[key] || 0);
+    });
+
     availableQuota[workspace] = {
       instances:
         (totalQuota[workspace]?.instances || 0) -
@@ -98,6 +120,7 @@ export function calculateAvailableQuota(
       disk:
         (totalQuota[workspace]?.disk || 0) -
         (consumedQuota[workspace]?.disk || 0),
+      otherResources: availableOther,
     };
   }
 
