@@ -50,6 +50,7 @@ var (
 // TenantResourceList forges the WorkspaceResourceQuota as the sum of all quota for each workspace plus the personal workspace quota.
 func TenantResourceList(workspaces []clv1alpha1.Workspace, personalWorkspaceQuota *apicommon.WorkspaceResourceQuota) apicommon.WorkspaceResourceQuota {
 	var quota apicommon.WorkspaceResourceQuota
+	quota.OtherResources = make(map[string]resource.Quantity)
 
 	// sum all quota for each existing workspace
 	for i := range workspaces {

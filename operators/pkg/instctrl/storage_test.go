@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	apicommon "github.com/netgroup-polito/CrownLabs/operators/api/common"
 	clv1alpha2 "github.com/netgroup-polito/CrownLabs/operators/api/v1alpha2"
 	clctx "github.com/netgroup-polito/CrownLabs/operators/pkg/clcontext"
 	"github.com/netgroup-polito/CrownLabs/operators/pkg/forge"
@@ -47,7 +48,7 @@ var _ = Describe("Storage enforcement", func() {
 			instanceNamespace = "tenant-tester-mirror"
 
 			image       = "internal/registry/image:v1.0"
-			cpu         = 2
+			cpu         = "2"
 			cpuReserved = 25
 			memory      = "1250M"
 			disk        = "20Gi"
@@ -100,10 +101,12 @@ var _ = Describe("Storage enforcement", func() {
 				Image:              image,
 				MountMyDriveVolume: false,
 				Resources: clv1alpha2.EnvironmentResources{
-					CPU:                   cpu,
+					ResourceSpec: apicommon.ResourceSpec{
+						CPU:    resource.MustParse("1"),
+						Memory: resource.MustParse(memory),
+						Disk:   resource.MustParse(disk),
+					},
 					ReservedCPUPercentage: cpuReserved,
-					Memory:                resource.MustParse(memory),
-					Disk:                  resource.MustParse(disk),
 				},
 			}
 			instance = clv1alpha2.Instance{

@@ -17,16 +17,30 @@ package common
 
 import "k8s.io/apimachinery/pkg/api/resource"
 
-// WorkspaceResourceQuota defines the resource quota for each Workspace.
+// ResourceSpec contains the common resource fields shared across CrownLabs API objects.
 // +k8s:deepcopy-gen=true
-type WorkspaceResourceQuota struct {
-	// The maximum amount of CPU required by this Workspace.
+type ResourceSpec struct {
+	// The maximum amount of CPU required by this resource set.
 	// +kubebuilder:validation:XValidation:rule="quantity(self).compareTo(quantity('1')) >= 0",message="Minimum 1 CPU core is required"
 	CPU resource.Quantity `json:"cpu"`
 
-	// The maximum amount of RAM memory required by this Workspace.
+	// The maximum amount of RAM memory required by this resource set.
 	// +kubebuilder:validation:XValidation:rule="quantity(self).compareTo(quantity('1Gi')) >= 0",message="Minimum 1 GB of RAM is required"
 	Memory resource.Quantity `json:"memory"`
+
+	// The maximum amount of disk occupancy required by this resource set.
+	// +kubebuilder:validation:Optional
+	Disk resource.Quantity `json:"disk,omitempty"`
+
+	// Generic map to handle any extended hardware resources (e.g., nvidia.com/gpu, amd.com/gpu)
+	// without hardcoding specific vendor keys.
+	OtherResources map[string]resource.Quantity `json:"otherResources,omitempty"`
+}
+
+// WorkspaceResourceQuota defines the resource quota for each Workspace.
+// +k8s:deepcopy-gen=true
+type WorkspaceResourceQuota struct {
+	ResourceSpec `json:",inline"`
 
 	// The maximum number of concurrent instances required by this Workspace.
 	// +kubebuilder:validation:Minimum:=1
