@@ -32,6 +32,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	apicommon "github.com/netgroup-polito/CrownLabs/operators/api/common"
 	clv1alpha2 "github.com/netgroup-polito/CrownLabs/operators/api/v1alpha2"
 	clctx "github.com/netgroup-polito/CrownLabs/operators/pkg/clcontext"
 	"github.com/netgroup-polito/CrownLabs/operators/pkg/forge"
@@ -92,7 +93,7 @@ var _ = Describe("Generation of the container based instances", func() {
 		tenantName        = "tester"
 
 		image       = "internal/registry/image:v1.0"
-		cpu         = 2
+		cpu         = "2"
 		cpuReserved = 25
 		memory      = "1250M"
 		disk        = "20Gi"
@@ -129,10 +130,12 @@ var _ = Describe("Generation of the container based instances", func() {
 			Image:              image,
 			MountMyDriveVolume: false,
 			Resources: clv1alpha2.EnvironmentResources{
-				CPU:                   cpu,
+				ResourceSpec: apicommon.ResourceSpec{
+					CPU:    resource.MustParse(cpu),
+					Memory: resource.MustParse(memory),
+					Disk:   resource.MustParse(disk),
+				},
 				ReservedCPUPercentage: cpuReserved,
-				Memory:                resource.MustParse(memory),
-				Disk:                  resource.MustParse(disk),
 			},
 		}
 		template = clv1alpha2.Template{

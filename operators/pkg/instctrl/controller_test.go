@@ -30,6 +30,7 @@ import (
 	virtv1 "kubevirt.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	apicommon "github.com/netgroup-polito/CrownLabs/operators/api/common"
 	clv1alpha2 "github.com/netgroup-polito/CrownLabs/operators/api/v1alpha2"
 	clctx "github.com/netgroup-polito/CrownLabs/operators/pkg/clcontext"
 	"github.com/netgroup-polito/CrownLabs/operators/pkg/forge"
@@ -83,10 +84,12 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 				Persistent:      false,
 				GuiEnabled:      true,
 				Resources: clv1alpha2.EnvironmentResources{
-					CPU:                   1,
+					ResourceSpec: apicommon.ResourceSpec{
+						CPU:    resource.MustParse("1"),
+						Memory: resource.MustParse("1Gi"),
+						Disk:   *resource.NewScaledQuantity(10, resource.Giga),
+					},
 					ReservedCPUPercentage: 20,
-					Memory:                *resource.NewScaledQuantity(1, resource.Giga),
-					Disk:                  *resource.NewScaledQuantity(10, resource.Giga),
 				},
 			},
 			{
@@ -96,10 +99,12 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 				Persistent:      true,
 				GuiEnabled:      true,
 				Resources: clv1alpha2.EnvironmentResources{
-					CPU:                   1,
+					ResourceSpec: apicommon.ResourceSpec{
+						CPU:    resource.MustParse("1"),
+						Memory: resource.MustParse("1Gi"),
+						Disk:   *resource.NewScaledQuantity(10, resource.Giga),
+					},
 					ReservedCPUPercentage: 20,
-					Memory:                *resource.NewScaledQuantity(1, resource.Giga),
-					Disk:                  *resource.NewScaledQuantity(10, resource.Giga),
 				},
 			},
 		}
@@ -622,10 +627,12 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 						Persistent:      false,
 						GuiEnabled:      true,
 						Resources: clv1alpha2.EnvironmentResources{
-							CPU:                   1,
+							ResourceSpec: apicommon.ResourceSpec{
+								CPU:    resource.MustParse("1"),
+								Memory: resource.MustParse("1Gi"),
+								Disk:   *resource.NewScaledQuantity(10, resource.Giga),
+							},
 							ReservedCPUPercentage: 20,
-							Memory:                *resource.NewScaledQuantity(1, resource.Giga),
-							Disk:                  *resource.NewScaledQuantity(10, resource.Giga),
 						},
 					},
 				}
@@ -800,10 +807,12 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 						Persistent:      false,
 						GuiEnabled:      true,
 						Resources: clv1alpha2.EnvironmentResources{
-							CPU:                   1,
+							ResourceSpec: apicommon.ResourceSpec{
+								CPU:    resource.MustParse("1"),
+								Memory: resource.MustParse("1Gi"),
+								Disk:   *resource.NewScaledQuantity(10, resource.Giga),
+							},
 							ReservedCPUPercentage: 20,
-							Memory:                *resource.NewScaledQuantity(1, resource.Giga),
-							Disk:                  *resource.NewScaledQuantity(10, resource.Giga),
 						},
 					},
 				}

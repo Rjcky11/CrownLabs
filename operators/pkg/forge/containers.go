@@ -372,17 +372,25 @@ func SetContainerResources(c *corev1.Container, cpuRequests, cpuLimits float32, 
 
 // SetContainerResourcesFromEnvironment sets the given container's Resources starting from the Resources specified inside the environment.
 func SetContainerResourcesFromEnvironment(c *corev1.Container, env *clv1alpha2.Environment) {
-	cpuRequestsMillis := env.Resources.CPU * env.Resources.ReservedCPUPercentage * 10
+	cpuRequestsMillis := env.Resources.CPU.MilliValue() * int64(env.Resources.ReservedCPUPercentage) / 100
 
 	c.Resources = corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    *resource.NewMilliQuantity(int64(cpuRequestsMillis), resource.DecimalSI),
-			corev1.ResourceMemory: env.Resources.Memory,
+			corev1.ResourceCPU:    *resource.NewMilliQuantity(cpuRequestsMillis, resource.DecimalSI),
+			corev1.ResourceMemory: env.Resources.Memory.DeepCopy(),
 		},
 		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    *resource.NewQuantity(int64(env.Resources.CPU), resource.DecimalSI),
-			corev1.ResourceMemory: env.Resources.Memory,
+			corev1.ResourceCPU:    env.Resources.CPU.DeepCopy(),
+			corev1.ResourceMemory: env.Resources.Memory.DeepCopy(),
 		},
+	}
+
+	if env.Resources.OtherResources != nil {
+		for resourceName, quantity := range env.Resources.OtherResources {
+			resName := corev1.ResourceName(resourceName)
+			c.Resources.Requests[resName] = quantity
+			c.Resources.Limits[resName] = quantity
+		}
 	}
 }
 
