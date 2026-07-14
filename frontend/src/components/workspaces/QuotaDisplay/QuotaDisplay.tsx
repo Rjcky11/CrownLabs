@@ -1,5 +1,3 @@
-import type { FC } from 'react';
-import { useContext } from 'react';
 import { Dropdown, Button, Typography, Space } from 'antd';
 import {
   DesktopOutlined,
@@ -7,7 +5,10 @@ import {
   DatabaseOutlined,
   HddOutlined,
   ThunderboltOutlined,
+  AreaChartOutlined,
 } from '@ant-design/icons';
+import type { FC } from 'react';
+import { useContext } from 'react';
 import './QuotaDisplay.less';
 import {
   OwnedInstancesContext,
@@ -30,7 +31,7 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
     disk: 0,
     otherResources: {},
   };
-  
+
   const workspaceTotalQuota: IQuota = totalQuota[workspaceName || ''] || {
     instances: 0,
     cpu: 0,
@@ -47,18 +48,54 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
 
   // Helper function to determine threshold status color based on resource utilization
   const getResourceStatusColor = (percentage: number): string => {
-    if (percentage > 80) return '#ff4d4f';
-    if (percentage >= 50) return '#faad14';
+    if (percentage == 100) return '#ff4d4f';
+    if (percentage >= 80) return '#faad14';
+    if (percentage >= 50) return '#fff652';
     return '#52c41a'; 
   };
 
-  // Helper function to format sanitized GraphQL resource keys into human-readable labels
+  // Helper function to determine the hover tooltip message based on resource utilization
+  const getResourceStatusMessage = (percentage: number): string => {
+    if (percentage == 100) return 'Resource usage: critical';
+    if (percentage >= 80) return 'Resource usage: high';
+    if (percentage >= 50) return 'Resource usage: moderate';
+    return 'Resource usage: low';
+  };
+
+  // Helper function to format sanitized GraphQL resource keys into human-readable labels dynamically from env
   const formatExtendedResourceLabel = (key: string): string => {
+  const envRaw = import.meta.env.VITE_APP_CUSTOM_RESOURCES;
+    
+    if (envRaw) {
+      try {
+        const customResources: Record<string, string> = JSON.parse(envRaw);
+        const lowerKey = key.toLowerCase();
+        
+        for (const [k8sKey, label] of Object.entries(customResources)) {
+          // Clean both keys from symbols (. or /) to securely match camelCase keys like nvidiaComGpu
+          const cleanK8s = k8sKey.replace(/[./]/g, '').toLowerCase();
+          const cleanKey = key.replace(/[./]/g, '').toLowerCase();
+          
+          if (k8sKey.toLowerCase() === lowerKey || cleanK8s === cleanKey) {
+            return label;
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing REACT_APP_CUSTOM_RESOURCES env variable:', error);
+      }
+    }
+
+    // Fallback behavior: if the key is not in the env map, return it in uppercase
+    return key.toUpperCase();
+  };
+
+  // Helper function to format sanitized GraphQL resource keys into human-readable labels
+  /*const formatExtendedResourceLabel = (key: string): string => {
     const upperKey = key.toUpperCase();
     if (upperKey.includes('NVIDIA')) return 'NVIDIA GPU';
     if (upperKey.includes('AMD')) return 'AMD GPU';
     return upperKey;
-  };
+  };*/
 
   // Compute standard infrastructure percentages
   const cpuPct = calculatePercentage(Number(workspaceConsumedQuota.cpu), Number(workspaceTotalQuota.cpu));
@@ -103,7 +140,7 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
           <span style={indicatorStyle(getResourceStatusColor(cpuPct))} />
           <span style={verticalDividerStyle} />
           <DesktopOutlined className="primary-color-fg" />
-          <Text>CPU: <strong>{workspaceConsumedQuota.cpu}/{workspaceTotalQuota.cpu}</strong> ({cpuPct.toFixed(0)}%)</Text>
+          <Text>CPU: <strong>{parseInt(String(workspaceConsumedQuota.cpu || 0), 10)}/{parseInt(String(workspaceTotalQuota.cpu || 0), 10)}</strong> ({cpuPct.toFixed(0)}%)</Text>
         </Space>
       ),
     },
@@ -161,12 +198,16 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
   ];
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <span style={{ marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#595959' }}>
+        Resources
+      </span>
       <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
         <Button
           shape="circle"
           size="large"
           className="quota-status-button"
+          icon={<AreaChartOutlined />}
           style={{
             backgroundColor: mainStatusColor,
             borderColor: mainStatusColor,
@@ -174,8 +215,12 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
             height: '42px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
             transition: 'transform 0.2s, background-color 0.3s',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
-          title={`Worst-case resource usage is at ${maxPercentage.toFixed(0)}%`}
+          title={getResourceStatusMessage(maxPercentage)}
         />
       </Dropdown>
     </div>
