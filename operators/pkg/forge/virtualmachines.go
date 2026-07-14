@@ -103,8 +103,13 @@ func VolumeCloudInit(secretName string) virtv1.Volume {
 // VirtualMachineDomain forges the specification of the domain of a Kubevirt VirtualMachineInstance
 // object representing the definition of the VM corresponding to a given CrownLabs Environment.
 func VirtualMachineDomain(environment *clv1alpha2.Environment, mountInfos []corev1.VolumeMount) virtv1.DomainSpec {
+	cpuVal := environment.Resources.CPU.Value()
+	if cpuVal < 0 {
+		cpuVal = 0
+	}
 	return virtv1.DomainSpec{
-		CPU:       &virtv1.CPU{Cores: environment.Resources.CPU},
+		//nolint:gosec // G115: CPU cores value will never exceed uint32 capacity in a real cluster configuration.
+		CPU:       &virtv1.CPU{Cores: uint32(cpuVal)},
 		Memory:    &virtv1.Memory{Guest: &environment.Resources.Memory},
 		Resources: VirtualMachineResources(environment),
 		Devices: virtv1.Devices{
@@ -208,29 +213,43 @@ func VirtualMachineFilesystems(mountInfos []corev1.VolumeMount) []virtv1.Filesys
 
 // VirtualMachineResources forges the resource requirements for a given VM environment.
 func VirtualMachineResources(environment *clv1alpha2.Environment) virtv1.ResourceRequirements {
+	// Create the base resource list with standard CPU/Memory requests/limits
+	requests := corev1.ResourceList{
+		corev1.ResourceCPU:    VirtualMachineCPURequests(environment),
+		corev1.ResourceMemory: VirtualMachineMemoryRequirements(environment),
+	}
+
+	limits := corev1.ResourceList{
+		corev1.ResourceCPU:    VirtualMachineCPULimits(environment),
+		corev1.ResourceMemory: VirtualMachineMemoryRequirements(environment),
+	}
+
+	// Inject dynamic extended resources (e.g., nvidia.com/gpu)
+	if environment.Resources.OtherResources != nil {
+		for resName, qty := range environment.Resources.OtherResources {
+			res := corev1.ResourceName(resName)
+			requests[res] = qty
+			limits[res] = qty
+		}
+	}
+
 	return virtv1.ResourceRequirements{
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    VirtualMachineCPURequests(environment),
-			corev1.ResourceMemory: VirtualMachineMemoryRequirements(environment),
-		},
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    VirtualMachineCPULimits(environment),
-			corev1.ResourceMemory: VirtualMachineMemoryRequirements(environment),
-		},
+		Requests: requests,
+		Limits:   limits,
 	}
 }
 
 // VirtualMachineCPURequests computes the CPU requests based on a given environment.
 func VirtualMachineCPURequests(environment *clv1alpha2.Environment) resource.Quantity {
-	cpu := int64(10 * environment.Resources.CPU * environment.Resources.ReservedCPUPercentage)
+	cpu := environment.Resources.CPU.MilliValue() * int64(environment.Resources.ReservedCPUPercentage) / 100
 	return *resource.NewScaledQuantity(cpu, resource.Milli)
 }
 
 // VirtualMachineCPULimits computes the CPU limits based on a given environment.
 func VirtualMachineCPULimits(environment *clv1alpha2.Environment) resource.Quantity {
-	cpu := resource.NewQuantity(int64(environment.Resources.CPU), resource.DecimalSI)
+	cpu := environment.Resources.CPU.DeepCopy()
 	cpu.Add(cpuHypervisorOverhead)
-	return *cpu
+	return cpu
 }
 
 // VirtualMachineMemoryRequirements computes the memory requirements based on a given environment.
