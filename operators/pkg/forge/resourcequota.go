@@ -57,6 +57,19 @@ func TenantResourceList(workspaces []clv1alpha1.Workspace, personalWorkspaceQuot
 		quota.CPU.Add(workspaces[i].Spec.Quota.CPU)
 		quota.Memory.Add(workspaces[i].Spec.Quota.Memory)
 		quota.Instances += workspaces[i].Spec.Quota.Instances
+		quota.Disk.Add(workspaces[i].Spec.Quota.Disk)
+
+		// Dynamically sum extended resources from each workspace
+		if workspaces[i].Spec.Quota.OtherResources != nil {
+			for resName, resQty := range workspaces[i].Spec.Quota.OtherResources {
+				if currentQty, exists := quota.OtherResources[resName]; exists {
+					currentQty.Add(resQty)
+					quota.OtherResources[resName] = currentQty
+				} else {
+					quota.OtherResources[resName] = resQty.DeepCopy()
+				}
+			}
+		}
 	}
 
 	// add personal workspace quota if defined
@@ -64,6 +77,19 @@ func TenantResourceList(workspaces []clv1alpha1.Workspace, personalWorkspaceQuot
 		quota.CPU.Add(personalWorkspaceQuota.CPU)
 		quota.Memory.Add(personalWorkspaceQuota.Memory)
 		quota.Instances += personalWorkspaceQuota.Instances
+		quota.Disk.Add(personalWorkspaceQuota.Disk)
+
+		// Dynamically sum extended resources from the personal workspace
+		if personalWorkspaceQuota.OtherResources != nil {
+			for resName, resQty := range personalWorkspaceQuota.OtherResources {
+				if currentQty, exists := quota.OtherResources[resName]; exists {
+					currentQty.Add(resQty)
+					quota.OtherResources[resName] = currentQty
+				} else {
+					quota.OtherResources[resName] = resQty.DeepCopy()
+				}
+			}
+		}
 	}
 
 	// cap the quota if needed
@@ -82,13 +108,24 @@ func TenantResourceList(workspaces []clv1alpha1.Workspace, personalWorkspaceQuot
 
 // TenantResourceQuotaSpec converts a WorkspaceResourceQuota to a ResourceQuota's resource list.
 func TenantResourceQuotaSpec(quota *apicommon.WorkspaceResourceQuota) corev1.ResourceList {
-	return corev1.ResourceList{
-		corev1.ResourceLimitsCPU:      quota.CPU,
-		corev1.ResourceLimitsMemory:   quota.Memory,
-		corev1.ResourceRequestsCPU:    quota.CPU,
-		corev1.ResourceRequestsMemory: quota.Memory,
-		InstancesCountKey:             *resource.NewQuantity(quota.Instances, resource.DecimalSI),
+	resList := corev1.ResourceList{
+		corev1.ResourceLimitsCPU:       quota.CPU,
+		corev1.ResourceLimitsMemory:    quota.Memory,
+		corev1.ResourceRequestsCPU:     quota.CPU,
+		corev1.ResourceRequestsMemory:  quota.Memory,
+		InstancesCountKey:              *resource.NewQuantity(quota.Instances, resource.DecimalSI),
+		corev1.ResourceRequestsStorage: quota.Disk,
 	}
+
+	// Dynamically inject any custom resource (Nvidia GPU, AMD GPU, etc.)
+	// directly into the Kubernetes ResourceList without static checks.
+	if quota.OtherResources != nil {
+		for resourceName, quantity := range quota.OtherResources {
+			resList[corev1.ResourceName(resourceName)] = quantity
+		}
+	}
+
+	return resList
 }
 
 // SandboxResourceQuotaSpec forges the Resource Quota spec for sandbox namespaces.
