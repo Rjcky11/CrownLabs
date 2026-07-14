@@ -50,7 +50,7 @@ const WorkspaceContainer: FC<IWorkspaceContainerProps> = ({ ...props }) => {
         image: formEnv.image,
         mountMyDriveVolume: true,
         resources: {
-          cpu: formEnv.cpu,
+          cpu: String(formEnv.cpu || 1) as unknown as number,
           reservedCPUPercentage: formEnv.reservedCpu,
           memory: `${formEnv.ram}Gi`,
           otherResources: Object.fromEntries(
@@ -171,7 +171,7 @@ const WorkspaceContainer: FC<IWorkspaceContainerProps> = ({ ...props }) => {
                   <div style={{ marginRight: '64px', display: 'flex', alignItems: 'center' }}>
                     <QuotaDisplay workspaceName={workspace.name} />
                   </div>
-                  
+
                   {workspace.role === WorkspaceRole.manager && (
                     <Tooltip title="Create template">
                       <Button

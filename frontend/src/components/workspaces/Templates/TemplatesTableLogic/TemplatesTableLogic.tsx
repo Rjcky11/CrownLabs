@@ -261,10 +261,36 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
           resources: {
             reservedCPUPercentage:
               env.reservedCpu,
-            cpu: env.cpu,
+            cpu: String(env.cpu || "1") as unknown as number,
             memory: `${env.ram}Gi`,
             disk: env.disk ? `${env.disk}Gi` : undefined, 
             otherResources: Object.fromEntries(
+              Object.entries((env as any).otherResources || {}).map(
+                ([key, val]) => {
+                  let k8sKey = key;
+                  const envRaw = import.meta.env.VITE_APP_CUSTOM_RESOURCES;
+                  
+                  if (envRaw) {
+                    try {
+                      const customResources: Record<string, string> = JSON.parse(envRaw);
+                      for (const originalK8sKey of Object.keys(customResources)) {
+                        // Dynamically compute camelCase from K8s key layout (e.g. nvidia.com/gpu -> nvidiaComGpu)
+                        const computedCamelCase = originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
+                        
+                        if (key === originalK8sKey || key === computedCamelCase) {
+                          k8sKey = originalK8sKey;
+                          break;
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error parsing custom resources inside submitPatchHandler:', error);
+                    }
+                  }
+                  return [k8sKey, String(val ?? 0)];
+                }
+              )
+            ),
+            /*otherResources: Object.fromEntries(
               Object.entries((env as any).otherResources || {}).map(
                 ([key, val]) => {
                   let k8sKey = key;
@@ -273,7 +299,7 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                   return [k8sKey, String(val ?? 0)];
                 }
               )
-            ),
+            ),*/
           },
           image: env.image,
           disableControls: env.disableControls,
@@ -401,12 +427,12 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                 deleteTemplateLoading={loadingDeleteTemplateMutation}
                 editTemplate={(template: Template) => {
                   setUsedTemplate(template);
-                  
+                              
 
                   const rawTemplate = templateListData?.templateList?.templates?.find(
                     t => t?.metadata?.name === template.id
                   );
-
+                  
                   const templateForm: TemplateForm = {
                     name: template.name,
                     nodeSelector: template.nodeSelector,
@@ -439,6 +465,32 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                       );
 
                       const parsedOtherResources: Record<string, number> = {};
+                      const envRaw = import.meta.env.VITE_APP_CUSTOM_RESOURCES;
+
+                      Object.entries((rawEnv?.resources as any)?.otherResources || {}).forEach(
+                        ([key, val]) => {
+                          let formKey = key;
+                          
+                          if (envRaw) {
+                            try {
+                              const customResources: Record<string, string> = JSON.parse(envRaw);
+                              for (const originalK8sKey of Object.keys(customResources)) {
+                                if (key === originalK8sKey) {
+                                  // Map back to camelCase notation dynamically for form compatibility
+                                  formKey = originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
+                                  break;
+                                }
+                              }
+                            } catch (error) {
+                              console.error('Error parsing custom resources inside editTemplate mapping:', error);
+                            }
+                          }
+                          parsedOtherResources[formKey] = Number(val);
+                        }
+                      );
+
+                      /*const parsedOtherResources: Record<string, number> = {};
+                      
                       Object.entries((rawEnv?.resources as any)?.otherResources || {}).forEach(
                         ([key, val]) => {
                           let formKey = key;
@@ -446,13 +498,13 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                           if (key === 'amd.com/gpu') formKey = 'amdComGpu';
                           parsedOtherResources[formKey] = Number(val);
                         }
-                      );
+                      );*/
 
                       return {
                         name: env.name,
                         persistent: env.persistent,
                         environmentType: env.environmentType ?? EnvironmentType.VirtualMachine,
-                        cpu: env.resources.cpu,
+                        cpu: parseInt(String(env.resources.cpu || 1), 10),
                         reservedCpu: env.resources.reservedCPUPercentage ?? 50,
                         ram: env.resources.memory ? convertToGiB(env.resources.memory) : 0,
                         disk: env.resources.disk ? convertToGiB(env.resources.disk) : 0,
