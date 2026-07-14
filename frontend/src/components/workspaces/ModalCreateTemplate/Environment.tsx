@@ -663,19 +663,19 @@ export const Environment: FC<EnvironmentProps> = ({
           />
         </Form.Item>
 
-      {/* Disk */}
-      <Form.Item {...restField} name={[name,'disk']} 
-        label={<>Disk <Tooltip title="Amount of disk space allocated to the environment, if persistent"><InfoCircleOutlined className='ml-1' /></Tooltip></>} 
-        {...propInputField} >
-        <InputNumber
-          step={1}
-          style={{ width: "120px", textAlignLast: "center" }}
-          addonAfter="GiB"
-          disabled={!isPersistent(name)}
-          max={resources.disk.max}
-          min={getEnvironmentType(name) === EnvironmentType.VirtualMachine ? isPersistent(name) ? resources.disk.min : 0 : 0}
-        />
-      </Form.Item>
+        {/* Disk */}
+        <Form.Item {...restField} name={[name,'disk']}
+          label={<>Disk <Tooltip title="Amount of disk space allocated to the environment, if persistent"><InfoCircleOutlined className='ml-1' /></Tooltip></>}
+          {...propInputField} >
+          <InputNumber
+            step={1}
+            style={{ width: "120px", textAlignLast: "center" }}
+            addonAfter="GiB"
+            disabled={!isPersistent(name)}
+            max={resources.disk.max}
+            min={getEnvironmentType(name) === EnvironmentType.VirtualMachine ? isPersistent(name) ? resources.disk.min : 0 : 0}
+          />
+        </Form.Item>
 
         {/* Reserved CPU Percentage */}
         <Form.Item {...restField} name={[name, 'reservedCpu']}
@@ -706,7 +706,7 @@ export const Environment: FC<EnvironmentProps> = ({
             style={{ width: "120px", textAlignLast: "center" }}
             min={0}
             max={4}
-            addonAfter="GPU"
+            addonAfter="#"
           />
         </Form.Item>
 
@@ -722,7 +722,7 @@ export const Environment: FC<EnvironmentProps> = ({
             style={{ width: "120px", textAlignLast: "center" }}
             min={0}
             max={4}
-            addonAfter="GPU"
+            addonAfter="#"
           />
         </Form.Item>
       </Space>

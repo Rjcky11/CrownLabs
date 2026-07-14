@@ -88,8 +88,37 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
   const handleSubmit = async (values: WorkspaceFormValues) => {
     setLoading(true);
     try {
-      // Map the form array into a Kubernetes flat string object
+      // Map the form array into a Kubernetes flat string object dynamically using env variables
       const otherResourcesMap: { [key: string]: string } = {};
+      const envRaw = import.meta.env.VITE_APP_CUSTOM_RESOURCES;
+
+      values.otherResources?.forEach((res) => {
+        if (res.key && res.value != null) {
+          let k8sKey = res.key;
+          
+          if (envRaw) {
+            try {
+              const customResources: Record<string, string> = JSON.parse(envRaw);
+              for (const originalK8sKey of Object.keys(customResources)) {
+                // Dynamically convert Kubernetes key format (e.g., nvidia.com/gpu) to qlkube camelCase (e.g., nvidiaComGpu)
+                const computedCamelCase = originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
+                
+                // Match if the form field key corresponds to the original K8s key or the computed camelCase key
+                if (res.key === originalK8sKey || res.key === computedCamelCase) {
+                  k8sKey = originalK8sKey;
+                  break;
+                }
+              }
+            } catch (error) {
+              console.error('Failed to parse REACT_APP_CUSTOM_RESOURCES inside handleSubmit:', error);
+            }
+          }
+          
+          otherResourcesMap[k8sKey] = res.value.toString();
+        }
+      });
+      // Map the form array into a Kubernetes flat string object
+      /*const otherResourcesMap: { [key: string]: string } = {};
       values.otherResources?.forEach((res) => {
         if (res.key && res.value != null) {
           let k8sKey = res.key;
@@ -100,7 +129,7 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
           
           otherResourcesMap[k8sKey] = res.value.toString();
         }
-      });
+      });*/
 
       if (isEditMode) {
         // Edit mode: use apply mutation with JSON patch
