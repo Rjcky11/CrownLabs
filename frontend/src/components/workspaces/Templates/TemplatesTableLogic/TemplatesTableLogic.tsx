@@ -19,7 +19,7 @@ import {
 } from '../../../../generated-types';
 import { ErrorContext } from '../../../../errorHandling/ErrorContext';
 import { updatedWorkspaceTemplates } from '../../../../graphql-components/subscription';
-import { convertToGiB, getOriginalK8sKey, type Template, WorkspaceRole } from '../../../../utils';
+import { convertToGiB, getOriginalK8sKey, getCamelCaseKey, type Template, WorkspaceRole } from '../../../../utils';
 import { ErrorTypes } from '../../../../errorHandling/utils';
 import {
   makeGuiTemplate,
@@ -435,40 +435,12 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                       );
 
                       const parsedOtherResources: Record<string, number> = {};
-                      const envRaw = import.meta.env.VITE_APP_CUSTOM_RESOURCES;
-
-                      Object.entries((rawEnv?.resources as any)?.otherResources || {}).forEach(
-                        ([key, val]) => {
-                          let formKey = key;
-                          
-                          if (envRaw) {
-                            try {
-                              const customResources: Record<string, string> = JSON.parse(envRaw);
-                              for (const originalK8sKey of Object.keys(customResources)) {
-                                if (key === originalK8sKey) {
-                                  // Map back to camelCase notation dynamically for form compatibility
-                                  formKey = originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
-                                  break;
-                                }
-                              }
-                            } catch (error) {
-                              console.error('Error parsing custom resources inside editTemplate mapping:', error);
-                            }
-                          }
-                          parsedOtherResources[formKey] = Number(val);
-                        }
-                      );
-
-                      /*const parsedOtherResources: Record<string, number> = {};
                       
                       Object.entries((rawEnv?.resources as any)?.otherResources || {}).forEach(
                         ([key, val]) => {
-                          let formKey = key;
-                          if (key === 'nvidia.com/gpu') formKey = 'nvidiaComGpu';
-                          if (key === 'amd.com/gpu') formKey = 'amdComGpu';
-                          parsedOtherResources[formKey] = Number(val);
+                          parsedOtherResources[getCamelCaseKey(key)] = Number(val);
                         }
-                      );*/
+                      );
 
                       return {
                         name: env.name,

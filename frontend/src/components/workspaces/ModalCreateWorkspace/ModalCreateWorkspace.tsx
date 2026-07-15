@@ -105,7 +105,7 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
         const patchJson = JSON.stringify([
           { op: 'replace', path: '/spec/prettyName', value: values.prettyName },
           { op: 'replace', path: '/spec/autoEnroll', value: autoEnrollValue },
-          { op: 'replace', path: '/spec/quota/cpu', value: String(values.cpu) },
+          { op: 'replace', path: '/spec/quota/cpu', value: values.cpu },
           { op: 'replace', path: '/spec/quota/memory', value: `${values.memory}Gi` },
           { op: 'replace', path: '/spec/quota/instances', value: values.instances },
           { op: 'replace', path: '/spec/quota/disk', value: values.disk ? `${values.disk}Gi` : '0Gi' },
@@ -126,7 +126,7 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
             name: values.name,
             prettyName: values.prettyName,
             autoEnroll: normalizeAutoEnroll(values.autoEnroll),
-            cpu: String(values.cpu),
+            cpu: values.cpu,
             memory: `${values.memory}Gi`, // Kubernetes Quantity format
             labels: {
               'crownlabs.polito.it/operator-selector': 'production',

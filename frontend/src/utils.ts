@@ -489,6 +489,22 @@ export const getOriginalK8sKey = (key: string): string => {
 };
 
 /**
+ * Converts a standard Kubernetes key format (e.g., nvidia.com/gpu)
+ * to its qlkube camelCase counterpart (e.g., nvidiaComGpu).
+ */
+export const getCamelCaseKey = (key: string): string => {
+  const customResources = getCustomResourcesConfig();
+
+  for (const originalK8sKey of Object.keys(customResources)) {
+    if (key === originalK8sKey) {
+      return originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
+    }
+  }
+  // Fallback: apply the regex transformation directly if the key is not in config
+  return key.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
+};
+
+/**
  * Safely maps any resource key format (K8s or camelCase) to its
  * configured human-readable label (e.g., "NVIDIA GPU"). Fallback to uppercase key.
  */
