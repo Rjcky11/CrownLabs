@@ -80,3 +80,7 @@ resources:
   requests:
     cpu: 100m
     memory: 100Mi
+
+customResources:
+    nvidia.com/gpu: "NVIDIA GPU"
+    amd.com/gpu: "AMD GPU"

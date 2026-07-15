@@ -14,6 +14,9 @@ import {
   OwnedInstancesContext,
   type IQuota,
 } from '../../../contexts/OwnedInstancesContext';
+import {
+  formatExtendedResourceLabel,
+} from '../../../utils';
 
 const { Text } = Typography;
 
@@ -62,41 +65,6 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
     return 'Resource usage: low';
   };
 
-  // Helper function to format sanitized GraphQL resource keys into human-readable labels dynamically from env
-  const formatExtendedResourceLabel = (key: string): string => {
-  const envRaw = import.meta.env.VITE_APP_CUSTOM_RESOURCES;
-    
-    if (envRaw) {
-      try {
-        const customResources: Record<string, string> = JSON.parse(envRaw);
-        const lowerKey = key.toLowerCase();
-        
-        for (const [k8sKey, label] of Object.entries(customResources)) {
-          // Clean both keys from symbols (. or /) to securely match camelCase keys like nvidiaComGpu
-          const cleanK8s = k8sKey.replace(/[./]/g, '').toLowerCase();
-          const cleanKey = key.replace(/[./]/g, '').toLowerCase();
-          
-          if (k8sKey.toLowerCase() === lowerKey || cleanK8s === cleanKey) {
-            return label;
-          }
-        }
-      } catch (error) {
-        console.error('Error parsing REACT_APP_CUSTOM_RESOURCES env variable:', error);
-      }
-    }
-
-    // Fallback behavior: if the key is not in the env map, return it in uppercase
-    return key.toUpperCase();
-  };
-
-  // Helper function to format sanitized GraphQL resource keys into human-readable labels
-  /*const formatExtendedResourceLabel = (key: string): string => {
-    const upperKey = key.toUpperCase();
-    if (upperKey.includes('NVIDIA')) return 'NVIDIA GPU';
-    if (upperKey.includes('AMD')) return 'AMD GPU';
-    return upperKey;
-  };*/
-
   // Compute standard infrastructure percentages
   const cpuPct = calculatePercentage(Number(workspaceConsumedQuota.cpu), Number(workspaceTotalQuota.cpu));
   const memoryPct = calculatePercentage(workspaceConsumedQuota.memory, workspaceTotalQuota.memory);
@@ -140,7 +108,7 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
           <span style={indicatorStyle(getResourceStatusColor(cpuPct))} />
           <span style={verticalDividerStyle} />
           <DesktopOutlined className="primary-color-fg" />
-          <Text>CPU: <strong>{parseInt(String(workspaceConsumedQuota.cpu || 0), 10)}/{parseInt(String(workspaceTotalQuota.cpu || 0), 10)}</strong> ({cpuPct.toFixed(0)}%)</Text>
+          <Text>CPU: <strong>{workspaceConsumedQuota.cpu}/{workspaceTotalQuota.cpu}</strong> ({cpuPct.toFixed(0)}%)</Text>
         </Space>
       ),
     },
@@ -199,9 +167,6 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <span style={{ marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#595959' }}>
-        Resources
-      </span>
       <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
         <Button
           shape="circle"

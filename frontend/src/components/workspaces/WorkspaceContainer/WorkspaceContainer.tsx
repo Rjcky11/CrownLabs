@@ -50,7 +50,7 @@ const WorkspaceContainer: FC<IWorkspaceContainerProps> = ({ ...props }) => {
         image: formEnv.image,
         mountMyDriveVolume: true,
         resources: {
-          cpu: String(formEnv.cpu || 1) as unknown as number,
+          cpu: formEnv.cpu,
           reservedCPUPercentage: formEnv.reservedCpu,
           memory: `${formEnv.ram}Gi`,
           otherResources: Object.fromEntries(
