@@ -51,7 +51,7 @@ var _ = Describe("Containers and Deployment spec forging", func() {
 		instanceNamespace    = "tenant-tester"
 		tenantName           = "tester"
 		image                = "internal/registry/image:v1.0"
-		cpu                  = "2"
+		cpu                  = 2
 		expectedCPUReqMillis = 500
 		expectedCPULimMillis = 2000
 		cpuReserved          = 25
@@ -92,7 +92,7 @@ var _ = Describe("Containers and Deployment spec forging", func() {
 			Name:  envName,
 			Resources: clv1alpha2.EnvironmentResources{
 				ResourceSpec: apicommon.ResourceSpec{
-					CPU:    resource.MustParse(cpu),
+					CPU:    cpu,
 					Memory: resource.MustParse(memory),
 					Disk:   resource.MustParse(disk),
 				},

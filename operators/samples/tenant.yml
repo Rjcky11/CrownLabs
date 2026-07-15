@@ -5,14 +5,21 @@ metadata:
   labels:
     crownlabs.polito.it/operator-selector: local
 spec:
-  firstName: John
-  lastName: Doe
-  email: jonh.doe@email.com
+  firstName: "John"
+  lastName: "Doe"
+  email: "jonh.doe@email.com"
+  personalWorkspace:
+    instances: 10
+    cpu: "6"
+    memory: "44Gi"
+    disk: "15Gi"
+    otherResources:
+        nvidia.com/gpu: "2"
   workspaces:
-    - name: tea
-      role: user
-    - name: coffee
-      role: manager
+    #- name: tea
+    #  role: user
+    #- name: coffee
+    #  role: manager
   publicKeys:
-    - type1 key1 comment1
-    - type2 key2 comment3
+    - "type1 key1 comment1"
+    - "type2 key2 comment3"

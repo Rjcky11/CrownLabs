@@ -474,7 +474,7 @@ var _ = Describe("Validator webhook", func() {
 					newTenant.Spec.PersonalWorkspace = &apicommon.WorkspaceResourceQuota{
 						Instances: 2,
 						ResourceSpec: apicommon.ResourceSpec{
-							CPU:    resource.MustParse("4"),
+							CPU:    4,
 							Memory: resource.MustParse("8Gi"),
 						},
 					}
@@ -492,7 +492,7 @@ var _ = Describe("Validator webhook", func() {
 						oldTenant.Spec.PersonalWorkspace = &apicommon.WorkspaceResourceQuota{
 							Instances: 2,
 							ResourceSpec: apicommon.ResourceSpec{
-								CPU:    resource.MustParse("4"),
+								CPU:    4,
 								Memory: resource.MustParse("8Gi"),
 							},
 						}
@@ -519,7 +519,7 @@ var _ = Describe("Validator webhook", func() {
 						oldTenant.Spec.PersonalWorkspace = &apicommon.WorkspaceResourceQuota{
 							Instances: 2,
 							ResourceSpec: apicommon.ResourceSpec{
-								CPU:    resource.MustParse("4"),
+								CPU:    4,
 								Memory: resource.MustParse("8Gi"),
 							},
 						}
@@ -603,7 +603,7 @@ var _ = Describe("Validator webhook", func() {
 					newTenant.Spec.PersonalWorkspace = &apicommon.WorkspaceResourceQuota{
 						Instances: 2,
 						ResourceSpec: apicommon.ResourceSpec{
-							CPU:    resource.MustParse("4"),
+							CPU:    4,
 							Memory: resource.MustParse("8Gi"),
 						},
 					}
@@ -619,7 +619,7 @@ var _ = Describe("Validator webhook", func() {
 					oldTenant.Spec.PersonalWorkspace = &apicommon.WorkspaceResourceQuota{
 						Instances: 2,
 						ResourceSpec: apicommon.ResourceSpec{
-							CPU:    resource.MustParse("4"),
+							CPU:    4,
 							Memory: resource.MustParse("8Gi"),
 						},
 					}

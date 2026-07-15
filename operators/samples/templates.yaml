@@ -29,8 +29,9 @@ spec:
       mountMyDriveVolume: false
       persistent: false
       resources:
-        cpu: 2
-        memory: 2G
+        cpu: "2"
+        memory: 2Gi
+        disk: 10Gi
         reservedCPUPercentage: 25
       sharedVolumeMounts:
       - sharedVolume:
@@ -60,8 +61,9 @@ spec:
       persistent: true
       mountMyDriveVolume: false
       resources:
-        cpu: 4
-        memory: 1G
+        cpu: "4"
+        memory: 1Gi
+        disk: 10Gi
         reservedCPUPercentage: 50
   workspace.crownlabs.polito.it/WorkspaceRef:
     name: coffee
@@ -87,8 +89,9 @@ spec:
         startupArgs:
           - "--disable-marketplace"
       resources:
-        cpu: 2
-        memory: 2G
+        cpu: "2"
+        memory: 2Gi
+        disk: 10Gi
         reservedCPUPercentage: 25
       rewriteURL: true
   workspace.crownlabs.polito.it/WorkspaceRef:
@@ -100,7 +103,7 @@ metadata:
   name: vscode-c-cpp-persistent
   namespace: workspace-standalone
   annotations:
-    crownlabs.polito.it/custom-number-alerts: "5" # Custom number of alerts for this template
+    crownlabs.polito.it/custom-number-alerts: "5"
 spec:
   prettyName: vscode c-cpp persistent
   description: A template about vscode
@@ -112,9 +115,9 @@ spec:
       containerStartupOptions:
         contentPath: /config/workspace
       resources:
-        cpu: 2
-        memory: 2G
-        disk: 4G
+        cpu: "2"
+        memory: 2Gi
+        disk: 10Gi
         reservedCPUPercentage: 25
       rewriteURL: true
       persistent: true
@@ -137,8 +140,9 @@ spec:
       containerStartupOptions:
         contentPath: /home/crownlabs
       resources:
-        cpu: 2
-        memory: 2G
+        cpu: "2"
+        memory: 2Gi
+        disk: 10Gi
         reservedCPUPercentage: 25
   workspace.crownlabs.polito.it/WorkspaceRef:
     name: standalone

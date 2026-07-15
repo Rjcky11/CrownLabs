@@ -15,6 +15,8 @@
 package forge
 
 import (
+	"math"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
@@ -54,7 +56,7 @@ func TenantResourceList(workspaces []clv1alpha1.Workspace, personalWorkspaceQuot
 
 	// sum all quota for each existing workspace
 	for i := range workspaces {
-		quota.CPU.Add(workspaces[i].Spec.Quota.CPU)
+		quota.CPU += workspaces[i].Spec.Quota.CPU
 		quota.Memory.Add(workspaces[i].Spec.Quota.Memory)
 		quota.Instances += workspaces[i].Spec.Quota.Instances
 		quota.Disk.Add(workspaces[i].Spec.Quota.Disk)
@@ -74,7 +76,7 @@ func TenantResourceList(workspaces []clv1alpha1.Workspace, personalWorkspaceQuot
 
 	// add personal workspace quota if defined
 	if personalWorkspaceQuota != nil {
-		quota.CPU.Add(personalWorkspaceQuota.CPU)
+		quota.CPU += personalWorkspaceQuota.CPU
 		quota.Memory.Add(personalWorkspaceQuota.Memory)
 		quota.Instances += personalWorkspaceQuota.Instances
 		quota.Disk.Add(personalWorkspaceQuota.Disk)
@@ -94,7 +96,15 @@ func TenantResourceList(workspaces []clv1alpha1.Workspace, personalWorkspaceQuot
 
 	// cap the quota if needed
 	if CapCPU > 0 {
-		quota.CPU = CapResourceQuantity(quota.CPU, *resource.NewQuantity(int64(CapCPU), resource.DecimalSI))
+		cappedCPU := CapIntegerQuantity(int64(quota.CPU), int64(CapCPU))
+		switch {
+		case cappedCPU < 0:
+			quota.CPU = 0
+		case cappedCPU > math.MaxUint32:
+			quota.CPU = math.MaxUint32
+		default:
+			quota.CPU = uint32(cappedCPU)
+		}
 	}
 	if CapMemoryGiga > 0 {
 		quota.Memory = CapResourceQuantity(quota.Memory, *resource.NewScaledQuantity(int64(CapMemoryGiga), resource.Giga))
@@ -109,9 +119,9 @@ func TenantResourceList(workspaces []clv1alpha1.Workspace, personalWorkspaceQuot
 // TenantResourceQuotaSpec converts a WorkspaceResourceQuota to a ResourceQuota's resource list.
 func TenantResourceQuotaSpec(quota *apicommon.WorkspaceResourceQuota) corev1.ResourceList {
 	resList := corev1.ResourceList{
-		corev1.ResourceLimitsCPU:       quota.CPU,
+		corev1.ResourceLimitsCPU:       *resource.NewQuantity(int64(quota.CPU), resource.DecimalSI),
 		corev1.ResourceLimitsMemory:    quota.Memory,
-		corev1.ResourceRequestsCPU:     quota.CPU,
+		corev1.ResourceRequestsCPU:     *resource.NewQuantity(int64(quota.CPU), resource.DecimalSI),
 		corev1.ResourceRequestsMemory:  quota.Memory,
 		InstancesCountKey:              *resource.NewQuantity(quota.Instances, resource.DecimalSI),
 		corev1.ResourceRequestsStorage: quota.Disk,

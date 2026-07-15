@@ -11,6 +11,7 @@ metadata:
   name: green-tea-6831
   namespace: tenant-john-doe
 spec:
+  running: true
   template.crownlabs.polito.it/TemplateRef:
     name: green-tea
     namespace: workspace-tea
@@ -23,6 +24,7 @@ metadata:
   name: instance-vscode-python-proxyenabled
   namespace: tenant-john-doe
 spec:
+  running: true
   template.crownlabs.polito.it/TemplateRef:
     name: vscode-python-proxyenabled
     namespace: workspace-standalone
@@ -35,6 +37,7 @@ metadata:
   name: instance-jupyterlab
   namespace: tenant-john-doe
 spec:
+  running: true
   template.crownlabs.polito.it/TemplateRef:
     name: jupyterlab
     namespace: workspace-standalone
@@ -47,6 +50,7 @@ metadata:
   name: instance-vscode-c-cpp-persistent
   namespace: tenant-john-doe
 spec:
+  running: true
   template.crownlabs.polito.it/TemplateRef:
     name: vscode-c-cpp-persistent
     namespace: workspace-standalone

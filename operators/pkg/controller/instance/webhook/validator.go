@@ -42,16 +42,23 @@ type InstanceValidator struct {
 }
 
 // accumulateEnvResources aggregates the resource footprints from a list of environments into the running totals.
-func accumulateEnvResources(envList []clv1alpha2.Environment, totalCPU *int64, totalMemory, totalDisk *resource.Quantity, totalOtherResources map[string]resource.Quantity) {
+func accumulateEnvResources(envList []clv1alpha2.Environment, total *apicommon.ResourceSpec) {
 	for i := range envList {
-		*totalCPU += envList[i].Resources.CPU.Value()
-		totalMemory.Add(envList[i].Resources.Memory)
-		totalDisk.Add(envList[i].Resources.Disk)
+		total.CPU += envList[i].Resources.CPU
+		total.Memory.Add(envList[i].Resources.Memory)
+		total.Disk.Add(envList[i].Resources.Disk)
+
 		if envList[i].Resources.OtherResources != nil {
+			if total.OtherResources == nil {
+				total.OtherResources = make(map[string]resource.Quantity)
+			}
 			for resourceName, quantity := range envList[i].Resources.OtherResources {
-				currentQty := totalOtherResources[resourceName]
-				currentQty.Add(quantity)
-				totalOtherResources[resourceName] = currentQty
+				if currentQty, exists := total.OtherResources[resourceName]; exists {
+					currentQty.Add(quantity)
+					total.OtherResources[resourceName] = currentQty
+				} else {
+					total.OtherResources[resourceName] = quantity.DeepCopy()
+				}
 			}
 		}
 	}
@@ -125,13 +132,15 @@ func validateQuota(ctx context.Context, instance *clv1alpha2.Instance, cl client
 
 	// Calculate total resource usage
 	var totalInstances int64 = 1 // Count the instance being created.
-	var totalCPU int64
-	totalMemory := resource.MustParse("0")
-	totalDisk := resource.MustParse("0")
-	totalOtherResources := map[string]resource.Quantity{}
+	totalResources := apicommon.ResourceSpec{
+		CPU:            0,
+		Memory:         resource.MustParse("0"),
+		Disk:           resource.MustParse("0"),
+		OtherResources: make(map[string]resource.Quantity),
+	}
 
 	// Add the resources of the instance being created
-	accumulateEnvResources(instanceTemplate.Spec.EnvironmentList, &totalCPU, &totalMemory, &totalDisk, totalOtherResources)
+	accumulateEnvResources(instanceTemplate.Spec.EnvironmentList, &totalResources)
 
 	// Add the resources of the other instances
 	for i := range workspaceInstances.Items {
@@ -153,7 +162,7 @@ func validateQuota(ctx context.Context, instance *clv1alpha2.Instance, cl client
 			continue
 		}
 
-		accumulateEnvResources(tmpl.Spec.EnvironmentList, &totalCPU, &totalMemory, &totalDisk, totalOtherResources)
+		accumulateEnvResources(tmpl.Spec.EnvironmentList, &totalResources)
 	}
 
 	// Check against the workspace quota
@@ -161,19 +170,20 @@ func validateQuota(ctx context.Context, instance *clv1alpha2.Instance, cl client
 		return warnings, fmt.Errorf("quota exceeded: Instances (%d > %d)", totalInstances, wsQuota.Instances)
 	}
 
-	if !wsQuota.CPU.IsZero() && totalCPU > wsQuota.CPU.Value() {
-		return warnings, fmt.Errorf("quota exceeded: CPU (%d > %d)", totalCPU, wsQuota.CPU.Value())
+	// Compare numeric CPU values directly using the uint32 fields
+	if wsQuota.CPU > 0 && totalResources.CPU > wsQuota.CPU {
+		return warnings, fmt.Errorf("quota exceeded: CPU (%d > %d)", totalResources.CPU, wsQuota.CPU)
 	}
 
-	if !wsQuota.Memory.IsZero() && totalMemory.Cmp(wsQuota.Memory) > 0 {
-		return warnings, fmt.Errorf("quota exceeded: Memory (%s > %s)", totalMemory.String(), wsQuota.Memory.String())
+	if !wsQuota.Memory.IsZero() && totalResources.Memory.Cmp(wsQuota.Memory) > 0 {
+		return warnings, fmt.Errorf("quota exceeded: Memory (%s > %s)", totalResources.Memory.String(), wsQuota.Memory.String())
 	}
 
-	if !wsQuota.Disk.IsZero() && totalDisk.Cmp(wsQuota.Disk) > 0 {
-		return warnings, fmt.Errorf("quota exceeded: Disk (%s > %s)", totalDisk.String(), wsQuota.Disk.String())
+	if !wsQuota.Disk.IsZero() && totalResources.Disk.Cmp(wsQuota.Disk) > 0 {
+		return warnings, fmt.Errorf("quota exceeded: Disk (%s > %s)", totalResources.Disk.String(), wsQuota.Disk.String())
 	}
 
-	for resourceName, usedQty := range totalOtherResources {
+	for resourceName, usedQty := range totalResources.OtherResources {
 		var quotaQty resource.Quantity // Defaults to zero quantity
 		if wsQuota.OtherResources != nil {
 			if q, exists := wsQuota.OtherResources[resourceName]; exists {

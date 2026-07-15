@@ -103,13 +103,8 @@ func VolumeCloudInit(secretName string) virtv1.Volume {
 // VirtualMachineDomain forges the specification of the domain of a Kubevirt VirtualMachineInstance
 // object representing the definition of the VM corresponding to a given CrownLabs Environment.
 func VirtualMachineDomain(environment *clv1alpha2.Environment, mountInfos []corev1.VolumeMount) virtv1.DomainSpec {
-	cpuVal := environment.Resources.CPU.Value()
-	if cpuVal < 0 {
-		cpuVal = 0
-	}
 	return virtv1.DomainSpec{
-		//nolint:gosec // G115: CPU cores value will never exceed uint32 capacity in a real cluster configuration.
-		CPU:       &virtv1.CPU{Cores: uint32(cpuVal)},
+		CPU:       &virtv1.CPU{Cores: environment.Resources.CPU},
 		Memory:    &virtv1.Memory{Guest: &environment.Resources.Memory},
 		Resources: VirtualMachineResources(environment),
 		Devices: virtv1.Devices{
@@ -241,15 +236,15 @@ func VirtualMachineResources(environment *clv1alpha2.Environment) virtv1.Resourc
 
 // VirtualMachineCPURequests computes the CPU requests based on a given environment.
 func VirtualMachineCPURequests(environment *clv1alpha2.Environment) resource.Quantity {
-	cpu := environment.Resources.CPU.MilliValue() * int64(environment.Resources.ReservedCPUPercentage) / 100
+	cpu := int64(10 * environment.Resources.CPU * environment.Resources.ReservedCPUPercentage)
 	return *resource.NewScaledQuantity(cpu, resource.Milli)
 }
 
 // VirtualMachineCPULimits computes the CPU limits based on a given environment.
 func VirtualMachineCPULimits(environment *clv1alpha2.Environment) resource.Quantity {
-	cpu := environment.Resources.CPU.DeepCopy()
+	cpu := resource.NewQuantity(int64(environment.Resources.CPU), resource.DecimalSI)
 	cpu.Add(cpuHypervisorOverhead)
-	return cpu
+	return *cpu
 }
 
 // VirtualMachineMemoryRequirements computes the memory requirements based on a given environment.

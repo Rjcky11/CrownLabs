@@ -87,7 +87,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 				GuiEnabled:      true,
 				Resources: clv1alpha2.EnvironmentResources{
 					ResourceSpec: apicommon.ResourceSpec{
-						CPU:    resource.MustParse("1"),
+						CPU:    1,
 						Memory: resource.MustParse("1Gi"),
 						Disk:   *resource.NewScaledQuantity(10, resource.Giga),
 					},
@@ -102,7 +102,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 				GuiEnabled:      true,
 				Resources: clv1alpha2.EnvironmentResources{
 					ResourceSpec: apicommon.ResourceSpec{
-						CPU:    resource.MustParse("1"),
+						CPU:    1,
 						Memory: resource.MustParse("1Gi"),
 						Disk:   *resource.NewScaledQuantity(10, resource.Giga),
 					},
@@ -630,7 +630,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 						GuiEnabled:      true,
 						Resources: clv1alpha2.EnvironmentResources{
 							ResourceSpec: apicommon.ResourceSpec{
-								CPU:    resource.MustParse("1"),
+								CPU:    1,
 								Memory: resource.MustParse("1Gi"),
 								Disk:   *resource.NewScaledQuantity(10, resource.Giga),
 							},
@@ -810,7 +810,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 						GuiEnabled:      true,
 						Resources: clv1alpha2.EnvironmentResources{
 							ResourceSpec: apicommon.ResourceSpec{
-								CPU:    resource.MustParse("1"),
+								CPU:    1,
 								Memory: resource.MustParse("1Gi"),
 								Disk:   *resource.NewScaledQuantity(10, resource.Giga),
 							},

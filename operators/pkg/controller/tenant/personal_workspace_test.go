@@ -44,7 +44,7 @@ var _ = Describe("Personal workspace handling", func() {
 				tnResource.Spec.PersonalWorkspace = &apicommon.WorkspaceResourceQuota{
 					Instances: 2,
 					ResourceSpec: apicommon.ResourceSpec{
-						CPU:    resource.MustParse("4"),
+						CPU:    4,
 						Memory: resource.MustParse("8Gi"),
 					},
 				}

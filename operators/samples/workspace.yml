@@ -5,10 +5,11 @@ metadata:
   labels:
     crownlabs.polito.it/operator-selector: local
 spec:
-  prettyName: A cup of tea from the queen
+  prettyName: "A cup of tea from the queen"
   quota:
     cpu: "8"
     memory: "15Gi"
+    disk: "50Gi"
     instances: 3
 ---
 apiVersion: crownlabs.polito.it/v1alpha1
@@ -18,10 +19,11 @@ metadata:
   labels:
     crownlabs.polito.it/operator-selector: local
 spec:
-  prettyName: Just coffee
+  prettyName: "Just coffee"
   quota:
     cpu: "10"
     memory: "25Gi"
+    disk: "100Gi"
     instances: 5
 ---
 apiVersion: crownlabs.polito.it/v1alpha1
@@ -31,8 +33,9 @@ metadata:
   labels:
     crownlabs.polito.it/operator-selector: local
 spec:
-  prettyName: A bit spicy
+  prettyName: "A bit spicy"
   quota:
     cpu: "6"
     memory: "20Gi"
+    disk: "50Gi"
     instances: 4

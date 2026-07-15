@@ -21,8 +21,8 @@ import "k8s.io/apimachinery/pkg/api/resource"
 // +k8s:deepcopy-gen=true
 type ResourceSpec struct {
 	// The maximum amount of CPU required by this resource set.
-	// +kubebuilder:validation:XValidation:rule="quantity(self).compareTo(quantity('1')) >= 0",message="Minimum 1 CPU core is required"
-	CPU resource.Quantity `json:"cpu"`
+	// +kubebuilder:validation:Minimum:=1
+	CPU uint32 `json:"cpu"`
 
 	// The maximum amount of RAM memory required by this resource set.
 	// +kubebuilder:validation:XValidation:rule="quantity(self).compareTo(quantity('1Gi')) >= 0",message="Minimum 1 GB of RAM is required"

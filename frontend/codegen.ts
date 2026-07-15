@@ -5,9 +5,10 @@ const schemaUrl =
   '/schema';
 
 const config: CodegenConfig = {
-  schema: {
-    [schemaUrl]: { handleAsSDL: true },
-  },
+  //schema: {
+  //  [schemaUrl]: { handleAsSDL: true },
+  //},
+  schema: './schema.graphql',
   documents: ['./src/**/*.ts', './src/**/*.graphql'],
   generates: {
     './src/generated-types.tsx': {

@@ -4,5 +4,5 @@ metadata:
   name: mylemon
   namespace: workspace-tea
 spec:
-  prettyName: My Lemon Drive
-  size: 1Gi
+  prettyName: "My Lemon Drive"
+  size: "1Gi"
