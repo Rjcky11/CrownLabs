@@ -21,7 +21,7 @@ require (
 	github.com/prometheus/common v0.66.0
 	github.com/ti-mo/conntrack v0.6.0
 	github.com/ti-mo/netfilter v0.5.3
-	golang.org/x/crypto v0.51.0
+	golang.org/x/crypto v0.52.0
 	golang.org/x/text v0.37.0
 	google.golang.org/grpc v1.79.3
 	gopkg.in/yaml.v3 v3.0.1
@@ -33,6 +33,7 @@ require (
 	kubevirt.io/api v1.2.0
 	kubevirt.io/containerized-data-importer-api v1.58.3
 	sigs.k8s.io/controller-runtime v0.21.0
+	sigs.k8s.io/gateway-api v1.3.0
 	sigs.k8s.io/sig-storage-lib-external-provisioner/v13 v13.0.0
 	sigs.k8s.io/yaml v1.6.0
 )
