@@ -10,9 +10,9 @@ spec:
   email: "jonh.doe@email.com"
   personalWorkspace:
     instances: 10
-    cpu: "6"
+    cpu: 20
     memory: "44Gi"
-    disk: "15Gi"
+    disk: "25Gi"
     otherResources:
         nvidia.com/gpu: "2"
   workspaces:
