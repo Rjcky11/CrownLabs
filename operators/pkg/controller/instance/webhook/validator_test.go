@@ -52,7 +52,7 @@ var _ = Describe("InstanceValidator", func() {
 				Quota: apicommon.WorkspaceResourceQuota{
 					Instances: 2,
 					ResourceSpec: apicommon.ResourceSpec{
-						CPU:    resource.MustParse("4"),
+						CPU:    4,
 						Memory: resource.MustParse("8Gi"),
 					},
 				},
@@ -65,8 +65,8 @@ var _ = Describe("InstanceValidator", func() {
 					Name: testEnvironment,
 					Resources: clv1alpha2.EnvironmentResources{
 						ResourceSpec: apicommon.ResourceSpec{
-							CPU:    resource.MustParse("4"),
-							Memory: resource.MustParse("8Gi"),
+							CPU:    2,
+							Memory: resource.MustParse("2Gi"),
 						},
 					},
 				}},
@@ -110,7 +110,7 @@ var _ = Describe("InstanceValidator", func() {
 				Quota: apicommon.WorkspaceResourceQuota{
 					Instances: 1,
 					ResourceSpec: apicommon.ResourceSpec{
-						CPU:    resource.MustParse("2"),
+						CPU:    2,
 						Memory: resource.MustParse("2Gi"),
 					},
 				},
@@ -123,7 +123,7 @@ var _ = Describe("InstanceValidator", func() {
 					Name: testEnvironment,
 					Resources: clv1alpha2.EnvironmentResources{
 						ResourceSpec: apicommon.ResourceSpec{
-							CPU:    resource.MustParse("2"),
+							CPU:    2,
 							Memory: resource.MustParse("2Gi"),
 						},
 					},
@@ -169,7 +169,7 @@ var _ = Describe("InstanceValidator", func() {
 				Quota: apicommon.WorkspaceResourceQuota{
 					Instances: 2,
 					ResourceSpec: apicommon.ResourceSpec{
-						CPU:    resource.MustParse("4"),
+						CPU:    4,
 						Memory: resource.MustParse("8Gi"),
 						Disk:   resource.MustParse("10Gi"),
 					},
@@ -183,7 +183,7 @@ var _ = Describe("InstanceValidator", func() {
 					Name: testEnvironment,
 					Resources: clv1alpha2.EnvironmentResources{
 						ResourceSpec: apicommon.ResourceSpec{
-							CPU:    resource.MustParse("4"),
+							CPU:    4,
 							Memory: resource.MustParse("8Gi"),
 							Disk:   resource.MustParse("12Gi"),
 						},
@@ -218,7 +218,7 @@ var _ = Describe("InstanceValidator", func() {
 				Quota: apicommon.WorkspaceResourceQuota{
 					Instances: 2,
 					ResourceSpec: apicommon.ResourceSpec{
-						CPU:    resource.MustParse("4"),
+						CPU:    4,
 						Memory: resource.MustParse("8Gi"),
 						OtherResources: map[string]resource.Quantity{
 							"nvidia.com/gpu": resource.MustParse("1"),
@@ -234,7 +234,7 @@ var _ = Describe("InstanceValidator", func() {
 					Name: testEnvironment,
 					Resources: clv1alpha2.EnvironmentResources{
 						ResourceSpec: apicommon.ResourceSpec{
-							CPU:    resource.MustParse("4"),
+							CPU:    4,
 							Memory: resource.MustParse("8Gi"),
 							OtherResources: map[string]resource.Quantity{
 								"nvidia.com/gpu": resource.MustParse("2"),
@@ -271,7 +271,7 @@ var _ = Describe("InstanceValidator", func() {
 				Quota: apicommon.WorkspaceResourceQuota{
 					Instances: 2,
 					ResourceSpec: apicommon.ResourceSpec{
-						CPU:    resource.MustParse("4"),
+						CPU:    4,
 						Memory: resource.MustParse("8Gi"),
 					},
 				},

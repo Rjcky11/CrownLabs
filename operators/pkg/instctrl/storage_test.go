@@ -48,7 +48,7 @@ var _ = Describe("Storage enforcement", func() {
 			instanceNamespace = "tenant-tester-mirror"
 
 			image       = "internal/registry/image:v1.0"
-			cpu         = "2"
+			cpu         = 2
 			cpuReserved = 25
 			memory      = "1250M"
 			disk        = "20Gi"
@@ -102,7 +102,7 @@ var _ = Describe("Storage enforcement", func() {
 				MountMyDriveVolume: false,
 				Resources: clv1alpha2.EnvironmentResources{
 					ResourceSpec: apicommon.ResourceSpec{
-						CPU:    resource.MustParse("1"),
+						CPU:    cpu,
 						Memory: resource.MustParse(memory),
 						Disk:   resource.MustParse(disk),
 					},

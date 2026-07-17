@@ -69,16 +69,11 @@ spec:
                   and inherited by enrolled tenants.
                 properties:
                   cpu:
-                    anyOf:
-                    - type: integer
-                    - type: string
                     description: The maximum amount of CPU required by this resource
                       set.
-                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                    x-kubernetes-int-or-string: true
-                    x-kubernetes-validations:
-                    - message: Minimum 1 CPU core is required
-                      rule: quantity(self).compareTo(quantity('1')) >= 0
+                    format: int32
+                    minimum: 1
+                    type: integer
                   disk:
                     anyOf:
                     - type: integer

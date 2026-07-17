@@ -95,7 +95,7 @@ var _ = Describe("Instautoctrl inactivity unit test", func() {
 					GuiEnabled: true,
 					Resources: clv1alpha2.EnvironmentResources{
 						ResourceSpec: apicommon.ResourceSpec{
-							CPU:    resource.MustParse("1"),
+							CPU:    1,
 							Memory: resource.MustParse("1Gi"),
 						},
 						ReservedCPUPercentage: 1,
@@ -121,7 +121,7 @@ var _ = Describe("Instautoctrl inactivity unit test", func() {
 					GuiEnabled: true,
 					Resources: clv1alpha2.EnvironmentResources{
 						ResourceSpec: apicommon.ResourceSpec{
-							CPU:    resource.MustParse("1"),
+							CPU:    1,
 							Memory: resource.MustParse("1Gi"),
 						},
 						ReservedCPUPercentage: 1,
@@ -147,7 +147,7 @@ var _ = Describe("Instautoctrl inactivity unit test", func() {
 					GuiEnabled: true,
 					Resources: clv1alpha2.EnvironmentResources{
 						ResourceSpec: apicommon.ResourceSpec{
-							CPU:    resource.MustParse("1"),
+							CPU:    1,
 							Memory: resource.MustParse("1Gi"),
 						},
 						ReservedCPUPercentage: 1,

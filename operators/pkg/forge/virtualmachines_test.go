@@ -36,7 +36,7 @@ var _ = Describe("VirtualMachines and VirtualMachineInstances forging", func() {
 		templateName      = "test-template"
 		instanceNamespace = "tenant-tester"
 		image             = "internal/registry/image:v1.0"
-		cpu               = "2"
+		cpu               = 2
 		localVMImage      = "golden-images/debian-nginx-raw-block"
 		invalidLocalImage = "golden-images/debian/nginx/raw-block"
 		cpuReserved       = 25
@@ -69,7 +69,7 @@ var _ = Describe("VirtualMachines and VirtualMachineInstances forging", func() {
 			Image: image,
 			Resources: clv1alpha2.EnvironmentResources{
 				ResourceSpec: apicommon.ResourceSpec{
-					CPU:    resource.MustParse(cpu),
+					CPU:    cpu,
 					Memory: resource.MustParse(memory),
 					Disk:   resource.MustParse(disk),
 				},
@@ -228,8 +228,7 @@ var _ = Describe("VirtualMachines and VirtualMachineInstances forging", func() {
 		})
 
 		It("Should set the correct CPU value", func() {
-			cpuQty := resource.MustParse(cpu)
-			Expect(domain.CPU.Cores).To(BeNumerically("==", cpuQty.Value()))
+			Expect(domain.CPU.Cores).To(BeNumerically("==", cpu))
 		})
 		It("Should set the correct memory value", func() {
 			Expect(*domain.Memory.Guest).To(Equal(resource.MustParse(memory)))
