@@ -2,6 +2,9 @@ import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import type { EnvironmentType, Phase2, Phase5 } from './generated-types';
 import { Role } from './generated-types';
 import type { ContainerStartupOptionsForm } from './components/workspaces/ModalCreateTemplate/types';
+import { 
+  VITE_APP_CUSTOM_RESOURCES,
+} from './env';
 export type someKeysOf<T> = { [key in keyof T]?: T[key] };
 export enum WorkspaceRole {
   user = Role.User,
@@ -451,3 +454,75 @@ ${yamlPorts}`;
 
   return finalPatch;
 }
+
+/**
+ * Parses the custom resources JSON configuration from the environment (Vite or Helm ConfigMap).
+ */
+const getCustomResourcesConfig = (): Record<string, string> => {
+  if (!VITE_APP_CUSTOM_RESOURCES) {
+    return {};
+  }
+  try {
+    return JSON.parse(VITE_APP_CUSTOM_RESOURCES);
+  } catch (error) {
+    console.error('Error parsing VITE_APP_CUSTOM_RESOURCES configuration:', error);
+    return {};
+  }
+};
+
+/**
+ * Converts a camelCase or partial key (e.g., nvidiaComGpu) back to
+ * its original Kubernetes standard key format (e.g., nvidia.com/gpu).
+ */
+export const getOriginalK8sKey = (key: string): string => {
+  const customResources = getCustomResourcesConfig();
+
+  for (const originalK8sKey of Object.keys(customResources)) {
+    // Dynamically convert Kubernetes key format (e.g., nvidia.com/gpu) to qlkube camelCase (e.g., nvidiaComGpu)
+    const computedCamelCase = originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
+
+    if (key === originalK8sKey || key === computedCamelCase) {
+      return originalK8sKey;
+    }
+  }
+  return key;
+};
+
+/**
+ * Converts a standard Kubernetes key format (e.g., nvidia.com/gpu)
+ * to its qlkube camelCase counterpart (e.g., nvidiaComGpu).
+ */
+export const getCamelCaseKey = (key: string): string => {
+  const customResources = getCustomResourcesConfig();
+
+  for (const originalK8sKey of Object.keys(customResources)) {
+    if (key === originalK8sKey) {
+      return originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
+    }
+  }
+  // Fallback: apply the regex transformation directly if the key is not in config
+  return key.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
+};
+
+/**
+ * Safely maps any resource key format (K8s or camelCase) to its
+ * configured human-readable label (e.g., "NVIDIA GPU"). Fallback to uppercase key.
+ */
+export const formatExtendedResourceLabel = (key: string): string => {
+  const customResources = getCustomResourcesConfig();
+
+  // Clean input key from any non-alphanumeric characters and lowercase it (e.g. "nvidiaComGpu" -> "nvidiacomgpu")
+  const cleanKey = key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+  for (const [k8sKey, label] of Object.entries(customResources)) {
+    // Clean the K8s key in the same way (e.g. "nvidia.com/gpu" -> "nvidiacomgpu")
+    const cleanK8s = k8sKey.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+    if (cleanK8s === cleanKey || k8sKey.toLowerCase() === key.toLowerCase()) {
+      return label;
+    }
+  }
+
+  // Fallback behavior: if the key is not in the map, return it in uppercase
+  return key.toUpperCase();
+};

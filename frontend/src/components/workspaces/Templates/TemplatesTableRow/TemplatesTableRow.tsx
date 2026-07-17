@@ -27,7 +27,7 @@ import {
   OwnedInstancesContext,
   type IQuota,
 } from '../../../../contexts/OwnedInstancesContext';
-import type { Template } from '../../../../utils';
+import { formatExtendedResourceLabel, type Template } from '../../../../utils';
 import { cleanupLabels, convertToGiB, WorkspaceRole } from '../../../../utils';
 import { ModalAlert } from '../../../common/ModalAlert';
 import { TemplatesTableRowSettings } from '../TemplatesTableRowSettings';
@@ -169,35 +169,6 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
   const handleEditTemplate = () => {
     editTemplate(template);
   };
-
-  // Helper function to dynamically map extended resource keys from env without hardcoding
-  const formatExtendedResourceLabel = (key: string): string => {
-  const envRaw = import.meta.env.VITE_APP_CUSTOM_RESOURCES;
-  
-  if (envRaw) {
-    try {
-      const customResources: Record<string, string> = JSON.parse(envRaw);
-      
-      // Clean the key from any non-alphanumeric characters and lowercase it (e.g. "nvidiaComGpu" -> "nvidiacomgpu")
-      const cleanKey = key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-      
-      for (const [k8sKey, label] of Object.entries(customResources)) {
-        // Clean the K8s key as well (e.g. "nvidia.com/gpu" -> "nvidiacomgpu")
-        const cleanK8s = k8sKey.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        
-        if (cleanK8s === cleanKey) {
-          return label; // Returns "NVIDIA GPU" or "AMD GPU" from env
-        }
-      }
-    } catch (error) {
-      console.error('Error parsing VITE_APP_CUSTOM_RESOURCES env variable:', error);
-    }
-  }
-
-  // Fallback behavior: if not configured in .env, uppercase the clean label
-  return cleanupLabels(key).toUpperCase();
-  };
-
 
   return (
     <>
@@ -538,7 +509,7 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                 ) : (
                   <>
                     <div>
-                      CPU: {parseInt(String(template.resources.cpu)) || 'unavailable'}vCPU(s)
+                      CPU: {template.resources.cpu || 'unavailable'}vCPU(s)
                     </div>
                     <div>
                       RAM:{' '}

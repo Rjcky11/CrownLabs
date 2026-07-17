@@ -19,7 +19,7 @@ import {
 } from '../../../../generated-types';
 import { ErrorContext } from '../../../../errorHandling/ErrorContext';
 import { updatedWorkspaceTemplates } from '../../../../graphql-components/subscription';
-import { convertToGiB, type Template, WorkspaceRole } from '../../../../utils';
+import { convertToGiB, getOriginalK8sKey, getCamelCaseKey, type Template, WorkspaceRole } from '../../../../utils';
 import { ErrorTypes } from '../../../../errorHandling/utils';
 import {
   makeGuiTemplate,
@@ -264,45 +264,15 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
           resources: {
             reservedCPUPercentage:
               env.reservedCpu,
-            cpu: String(env.cpu || "1") as unknown as number,
+            cpu: env.cpu,
             memory: `${env.ram}Gi`,
             disk: env.disk ? `${env.disk}Gi` : undefined, 
             otherResources: Object.fromEntries(
-              Object.entries((env as any).otherResources || {}).map(
-                ([key, val]) => {
-                  let k8sKey = key;
-                  const envRaw = import.meta.env.VITE_APP_CUSTOM_RESOURCES;
-                  
-                  if (envRaw) {
-                    try {
-                      const customResources: Record<string, string> = JSON.parse(envRaw);
-                      for (const originalK8sKey of Object.keys(customResources)) {
-                        // Dynamically compute camelCase from K8s key layout (e.g. nvidia.com/gpu -> nvidiaComGpu)
-                        const computedCamelCase = originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
-                        
-                        if (key === originalK8sKey || key === computedCamelCase) {
-                          k8sKey = originalK8sKey;
-                          break;
-                        }
-                      }
-                    } catch (error) {
-                      console.error('Error parsing custom resources inside submitPatchHandler:', error);
-                    }
-                  }
-                  return [k8sKey, String(val ?? 0)];
-                }
-              )
+              Object.entries((env as any).otherResources || {}).map(([key, val]) => [
+                getOriginalK8sKey(key),
+                String(val ?? 0),
+              ])
             ),
-            /*otherResources: Object.fromEntries(
-              Object.entries((env as any).otherResources || {}).map(
-                ([key, val]) => {
-                  let k8sKey = key;
-                  if (key === 'nvidiaComGpu') k8sKey = 'nvidia.com/gpu';
-                  if (key === 'amdComGpu') k8sKey = 'amd.com/gpu';
-                  return [k8sKey, String(val ?? 0)];
-                }
-              )
-            ),*/
           },
           image: env.image,
           disableControls: env.disableControls,
@@ -468,46 +438,18 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                       );
 
                       const parsedOtherResources: Record<string, number> = {};
-                      const envRaw = import.meta.env.VITE_APP_CUSTOM_RESOURCES;
-
-                      Object.entries((rawEnv?.resources as any)?.otherResources || {}).forEach(
-                        ([key, val]) => {
-                          let formKey = key;
-                          
-                          if (envRaw) {
-                            try {
-                              const customResources: Record<string, string> = JSON.parse(envRaw);
-                              for (const originalK8sKey of Object.keys(customResources)) {
-                                if (key === originalK8sKey) {
-                                  // Map back to camelCase notation dynamically for form compatibility
-                                  formKey = originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
-                                  break;
-                                }
-                              }
-                            } catch (error) {
-                              console.error('Error parsing custom resources inside editTemplate mapping:', error);
-                            }
-                          }
-                          parsedOtherResources[formKey] = Number(val);
-                        }
-                      );
-
-                      /*const parsedOtherResources: Record<string, number> = {};
                       
                       Object.entries((rawEnv?.resources as any)?.otherResources || {}).forEach(
                         ([key, val]) => {
-                          let formKey = key;
-                          if (key === 'nvidia.com/gpu') formKey = 'nvidiaComGpu';
-                          if (key === 'amd.com/gpu') formKey = 'amdComGpu';
-                          parsedOtherResources[formKey] = Number(val);
+                          parsedOtherResources[getCamelCaseKey(key)] = Number(val);
                         }
-                      );*/
+                      );
 
                       return {
                         name: env.name,
                         persistent: env.persistent,
                         environmentType: env.environmentType ?? EnvironmentType.VirtualMachine,
-                        cpu: parseInt(String(env.resources.cpu || 1), 10),
+                        cpu: env.resources.cpu,
                         reservedCpu: env.resources.reservedCPUPercentage ?? 50,
                         ram: env.resources.memory ? convertToGiB(env.resources.memory) : 0,
                         disk: env.resources.disk ? convertToGiB(env.resources.disk) : 0,
