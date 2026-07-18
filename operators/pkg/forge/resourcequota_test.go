@@ -102,7 +102,7 @@ var _ = Describe("Resource quota spec forging", func() {
 
 			When("Forging resource quota", func() {
 				It("Should have total amount of CPU equal to the defined cap, because the sum for each workspace exceedes it", func() {
-					Expect(resultQuota.CPU).To(Equal(uint32(25)))
+					Expect(resultQuota.CPU).To(Equal(int64(25)))
 				})
 
 				It("Should have total amount of memory equal to the sum for each workspace", func() {
@@ -149,7 +149,7 @@ var _ = Describe("Resource quota spec forging", func() {
 
 		When("Forging the resource quota specifications", func() {
 			It("Should have total amount of CPU requests and limits equal to the ones associated with the Tenant", func() {
-				expectedCPU := *resource.NewQuantity(int64(tenant.Spec.PersonalWorkspace.CPU), resource.DecimalSI)
+				expectedCPU := *resource.NewQuantity(tenant.Spec.PersonalWorkspace.CPU, resource.DecimalSI)
 				Expect(spec[corev1.ResourceLimitsCPU]).To(Equal(expectedCPU))
 				Expect(spec[corev1.ResourceRequestsCPU]).To(Equal(expectedCPU))
 			})

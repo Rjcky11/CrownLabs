@@ -22,7 +22,7 @@ import "k8s.io/apimachinery/pkg/api/resource"
 type ResourceSpec struct {
 	// The maximum amount of CPU required by this resource set.
 	// +kubebuilder:validation:Minimum:=1
-	CPU uint32 `json:"cpu"`
+	CPU int64 `json:"cpu"`
 
 	// The maximum amount of RAM memory required by this resource set.
 	// +kubebuilder:validation:XValidation:rule="quantity(self).compareTo(quantity('1Gi')) >= 0",message="Minimum 1 GB of RAM is required"
@@ -35,6 +35,32 @@ type ResourceSpec struct {
 	// Generic map to handle any extended hardware resources (e.g., nvidia.com/gpu, amd.com/gpu)
 	// without hardcoding specific vendor keys.
 	OtherResources map[string]resource.Quantity `json:"otherResources,omitempty"`
+}
+
+// Accumulate merges and adds the resources from one or more ResourceSpec objects into the receiver.
+func (s *ResourceSpec) Accumulate(other *ResourceSpec) {
+	if other == nil {
+		return
+	}
+
+	s.CPU += other.CPU
+	s.Memory.Add(other.Memory)
+	s.Disk.Add(other.Disk)
+
+	// Dynamically merge and sum extended/custom resources
+	if other.OtherResources != nil {
+		if s.OtherResources == nil {
+			s.OtherResources = make(map[string]resource.Quantity)
+		}
+		for resName, resQty := range other.OtherResources {
+			if currentQty, exists := s.OtherResources[resName]; exists {
+				currentQty.Add(resQty)
+				s.OtherResources[resName] = currentQty
+			} else {
+				s.OtherResources[resName] = resQty.DeepCopy()
+			}
+		}
+	}
 }
 
 // WorkspaceResourceQuota defines the resource quota for each Workspace.

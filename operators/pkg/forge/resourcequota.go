@@ -15,8 +15,6 @@
 package forge
 
 import (
-	"math"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
@@ -56,55 +54,19 @@ func TenantResourceList(workspaces []clv1alpha1.Workspace, personalWorkspaceQuot
 
 	// sum all quota for each existing workspace
 	for i := range workspaces {
-		quota.CPU += workspaces[i].Spec.Quota.CPU
-		quota.Memory.Add(workspaces[i].Spec.Quota.Memory)
+		quota.Accumulate(&workspaces[i].Spec.Quota.ResourceSpec)
 		quota.Instances += workspaces[i].Spec.Quota.Instances
-		quota.Disk.Add(workspaces[i].Spec.Quota.Disk)
-
-		// Dynamically sum extended resources from each workspace
-		if workspaces[i].Spec.Quota.OtherResources != nil {
-			for resName, resQty := range workspaces[i].Spec.Quota.OtherResources {
-				if currentQty, exists := quota.OtherResources[resName]; exists {
-					currentQty.Add(resQty)
-					quota.OtherResources[resName] = currentQty
-				} else {
-					quota.OtherResources[resName] = resQty.DeepCopy()
-				}
-			}
-		}
 	}
 
 	// add personal workspace quota if defined
 	if personalWorkspaceQuota != nil {
-		quota.CPU += personalWorkspaceQuota.CPU
-		quota.Memory.Add(personalWorkspaceQuota.Memory)
+		quota.Accumulate(&personalWorkspaceQuota.ResourceSpec)
 		quota.Instances += personalWorkspaceQuota.Instances
-		quota.Disk.Add(personalWorkspaceQuota.Disk)
-
-		// Dynamically sum extended resources from the personal workspace
-		if personalWorkspaceQuota.OtherResources != nil {
-			for resName, resQty := range personalWorkspaceQuota.OtherResources {
-				if currentQty, exists := quota.OtherResources[resName]; exists {
-					currentQty.Add(resQty)
-					quota.OtherResources[resName] = currentQty
-				} else {
-					quota.OtherResources[resName] = resQty.DeepCopy()
-				}
-			}
-		}
 	}
 
 	// cap the quota if needed
 	if CapCPU > 0 {
-		cappedCPU := CapIntegerQuantity(int64(quota.CPU), int64(CapCPU))
-		switch {
-		case cappedCPU < 0:
-			quota.CPU = 0
-		case cappedCPU > math.MaxUint32:
-			quota.CPU = math.MaxUint32
-		default:
-			quota.CPU = uint32(cappedCPU)
-		}
+		quota.CPU = CapIntegerQuantity(quota.CPU, int64(CapCPU))
 	}
 	if CapMemoryGiga > 0 {
 		quota.Memory = CapResourceQuantity(quota.Memory, *resource.NewScaledQuantity(int64(CapMemoryGiga), resource.Giga))
@@ -119,21 +81,16 @@ func TenantResourceList(workspaces []clv1alpha1.Workspace, personalWorkspaceQuot
 // TenantResourceQuotaSpec converts a WorkspaceResourceQuota to a ResourceQuota's resource list.
 func TenantResourceQuotaSpec(quota *apicommon.WorkspaceResourceQuota) corev1.ResourceList {
 	resList := corev1.ResourceList{
-		corev1.ResourceLimitsCPU:       *resource.NewQuantity(int64(quota.CPU), resource.DecimalSI),
+		corev1.ResourceLimitsCPU:       *resource.NewQuantity(quota.CPU, resource.DecimalSI),
 		corev1.ResourceLimitsMemory:    quota.Memory,
-		corev1.ResourceRequestsCPU:     *resource.NewQuantity(int64(quota.CPU), resource.DecimalSI),
+		corev1.ResourceRequestsCPU:     *resource.NewQuantity(quota.CPU, resource.DecimalSI),
 		corev1.ResourceRequestsMemory:  quota.Memory,
 		InstancesCountKey:              *resource.NewQuantity(quota.Instances, resource.DecimalSI),
 		corev1.ResourceRequestsStorage: quota.Disk,
 	}
 
-	// Dynamically inject any custom resource (Nvidia GPU, AMD GPU, etc.)
-	// directly into the Kubernetes ResourceList without static checks.
-	if quota.OtherResources != nil {
-		for resourceName, quantity := range quota.OtherResources {
-			resList[corev1.ResourceName(resourceName)] = quantity
-		}
-	}
+	// Inject dynamic extended resources (e.g., nvidia.com/gpu)
+	InjectOtherResources(quota.OtherResources, resList)
 
 	return resList
 }
