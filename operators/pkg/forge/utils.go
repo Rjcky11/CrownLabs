@@ -21,6 +21,7 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -161,4 +162,14 @@ func MapFromKVString(raw string) (map[string]string, error) {
 		annotations[key] = value
 	}
 	return annotations, nil
+}
+
+// InjectOtherResources copies custom extended resources from a source map into a Kubernetes ResourceList.
+func InjectOtherResources(source map[string]resource.Quantity, target corev1.ResourceList) {
+	if source == nil || target == nil {
+		return
+	}
+	for resName, qty := range source {
+		target[corev1.ResourceName(resName)] = qty
+	}
 }

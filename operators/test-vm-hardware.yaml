@@ -1,0 +1,36 @@
+apiVersion: crownlabs.polito.it/v1alpha2
+kind: Template
+metadata:
+  name: lab-vm-hardware
+  namespace: workspace-standalone
+spec:
+  "workspace.crownlabs.polito.it/WorkspaceRef":
+    name: standalone
+  prettyName: "Laboratorio VM Avanzato"
+  description: "Template to verify backend refactoring on KubeVirt VM orchestration"
+  environmentList:
+    - name: vm-env
+      environmentType: VirtualMachine # <--- Questo attiva la logica delle VM (virtualmachines.go)
+      image: registry.crownlabs.example.com/tea/green:finest
+      guiEnabled: true
+      persistent: true
+      resources:
+        cpu: 4
+        memory: "8Gi"
+        disk: "20Gi"    # Test del nostro nuovo campo comune Disk sulle VM
+        reservedCPUPercentage: 50
+        otherResources:
+          devices.kubevirt.io/some-device: "1" # Test per l'iniezione di risorse estese nelle VM
+---
+apiVersion: crownlabs.polito.it/v1alpha2
+kind: Instance
+metadata:
+  name: istanza-studente-vm
+  namespace: tenant-john-doe
+spec:
+  running: true
+  template.crownlabs.polito.it/TemplateRef:
+    name: lab-vm-hardware
+    namespace: workspace-standalone
+  tenant.crownlabs.polito.it/TenantRef:
+    name: john.doe

@@ -1,0 +1,13 @@
+apiVersion: crownlabs.polito.it/v1alpha1
+kind: Workspace
+metadata:
+  name: cloud-programming
+  labels:
+    crownlabs.polito.it/operator-selector: local
+spec:
+  prettyName: "Cloud Programming"
+  quota:
+    cpu: 4
+    memory: "8Gi"
+    instances: 10
+    disk: "20Gi"

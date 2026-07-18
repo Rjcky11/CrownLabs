@@ -1,0 +1,22 @@
+apiVersion: crownlabs.polito.it/v1alpha2
+kind: Tenant
+metadata:
+  name: s343940
+spec:
+  firstName: "Riccardo"
+  lastName: "Boccia"
+  email: "s343940@studenti.polito.it"
+  workspaces:
+    - name: "cloud-programming"
+      role: "manager"
+---
+apiVersion: crownlabs.polito.it/v1alpha1
+kind: Workspace
+metadata:
+  name: cloud-programming
+spec:
+  prettyName: "Cloud Programming Workspace"
+  quota:
+    cpu: 4
+    memory: "8Gi"
+    instances: 10

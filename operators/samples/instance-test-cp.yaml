@@ -1,0 +1,12 @@
+apiVersion: crownlabs.polito.it/v1alpha2
+kind: Instance
+metadata:
+  name: cli-test-instance
+  namespace: tenant-s343940
+spec:
+  running: true
+  template.crownlabs.polito.it/TemplateRef:
+    name: cloud-programming-8xxtx
+    namespace: workspace-cloud-programming
+  tenant.crownlabs.polito.it/TenantRef:
+    name: s343940

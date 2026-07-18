@@ -119,7 +119,7 @@ var _ = Describe("The sharedvolume-controller Reconcile method", Ordered, func()
 				ResourceSpec: apicommon.ResourceSpec{
 					CPU:    1,
 					Memory: resource.MustParse("1Gi"),
-					Disk:   *resource.NewScaledQuantity(10, resource.Giga),
+					Disk:   resource.MustParse("10Gi"),
 				},
 				ReservedCPUPercentage: 20,
 			},
@@ -135,7 +135,7 @@ var _ = Describe("The sharedvolume-controller Reconcile method", Ordered, func()
 				ResourceSpec: apicommon.ResourceSpec{
 					CPU:    1,
 					Memory: resource.MustParse("1Gi"),
-					Disk:   *resource.NewScaledQuantity(10, resource.Giga),
+					Disk:   resource.MustParse("10Gi"),
 				},
 				ReservedCPUPercentage: 20,
 			},

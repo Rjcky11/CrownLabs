@@ -44,23 +44,7 @@ type InstanceValidator struct {
 // accumulateEnvResources aggregates the resource footprints from a list of environments into the running totals.
 func accumulateEnvResources(envList []clv1alpha2.Environment, total *apicommon.ResourceSpec) {
 	for i := range envList {
-		total.CPU += envList[i].Resources.CPU
-		total.Memory.Add(envList[i].Resources.Memory)
-		total.Disk.Add(envList[i].Resources.Disk)
-
-		if envList[i].Resources.OtherResources != nil {
-			if total.OtherResources == nil {
-				total.OtherResources = make(map[string]resource.Quantity)
-			}
-			for resourceName, quantity := range envList[i].Resources.OtherResources {
-				if currentQty, exists := total.OtherResources[resourceName]; exists {
-					currentQty.Add(quantity)
-					total.OtherResources[resourceName] = currentQty
-				} else {
-					total.OtherResources[resourceName] = quantity.DeepCopy()
-				}
-			}
-		}
+		total.Accumulate(&envList[i].Resources.ResourceSpec)
 	}
 }
 

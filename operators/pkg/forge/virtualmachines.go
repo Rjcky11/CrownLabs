@@ -220,13 +220,8 @@ func VirtualMachineResources(environment *clv1alpha2.Environment) virtv1.Resourc
 	}
 
 	// Inject dynamic extended resources (e.g., nvidia.com/gpu)
-	if environment.Resources.OtherResources != nil {
-		for resName, qty := range environment.Resources.OtherResources {
-			res := corev1.ResourceName(resName)
-			requests[res] = qty
-			limits[res] = qty
-		}
-	}
+	InjectOtherResources(environment.Resources.OtherResources, requests)
+	InjectOtherResources(environment.Resources.OtherResources, limits)
 
 	return virtv1.ResourceRequirements{
 		Requests: requests,
@@ -236,13 +231,13 @@ func VirtualMachineResources(environment *clv1alpha2.Environment) virtv1.Resourc
 
 // VirtualMachineCPURequests computes the CPU requests based on a given environment.
 func VirtualMachineCPURequests(environment *clv1alpha2.Environment) resource.Quantity {
-	cpu := int64(10 * environment.Resources.CPU * environment.Resources.ReservedCPUPercentage)
+	cpu := 10 * environment.Resources.CPU * int64(environment.Resources.ReservedCPUPercentage)
 	return *resource.NewScaledQuantity(cpu, resource.Milli)
 }
 
 // VirtualMachineCPULimits computes the CPU limits based on a given environment.
 func VirtualMachineCPULimits(environment *clv1alpha2.Environment) resource.Quantity {
-	cpu := resource.NewQuantity(int64(environment.Resources.CPU), resource.DecimalSI)
+	cpu := resource.NewQuantity(environment.Resources.CPU, resource.DecimalSI)
 	cpu.Add(cpuHypervisorOverhead)
 	return *cpu
 }

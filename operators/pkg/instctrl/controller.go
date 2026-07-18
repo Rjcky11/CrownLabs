@@ -19,7 +19,6 @@ import (
 	"context"
 	"reflect"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -243,10 +242,10 @@ func (r *InstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 	// Iterate over and enforce the instance environments.
 	if err = r.enforceEnvironments(ctx); err != nil {
 		// If it's a quota error, requeue and return nil to prevent CreationLoopBackoff
-		if strings.Contains(err.Error(), "exceeded quota") {
+		if utils.IsResourceQuotaExceeded(err) {
 			log.Info("resource quota exceeded during environment enforcement, requeuing", "error", err.Error())
 			r.EventsRecorder.Eventf(&instance, corev1.EventTypeWarning, EvEnvironmentErr, "Resource quota exceeded, retrying automatically")
-			return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+			return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 		}
 		log.Error(err, "failed to enforce instance environments")
 		return ctrl.Result{}, err
@@ -296,7 +295,7 @@ func (r *InstanceReconciler) enforceEnvironments(ctx context.Context) error {
 		// Run the single environment reconciliation
 		if err := r.enforceSingleEnvironment(innCtx, tmplEnv); err != nil {
 			// Check if the synchronous error is due to resource quota exhaustion
-			if strings.Contains(err.Error(), "exceeded quota") {
+			if utils.IsResourceQuotaExceeded(err) {
 				instance.Status.Environments[i].Phase = clv1alpha2.EnvironmentPhaseResourceQuotaExceeded
 			}
 			return err

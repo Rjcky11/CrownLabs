@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: crownlabs-resource-quota
+  namespace: tenant-john-doe
+spec:
+  hard:
+    requests.cpu: 6
+    requests.memory: "44Gi"
+    requests.storage: "15Gi"

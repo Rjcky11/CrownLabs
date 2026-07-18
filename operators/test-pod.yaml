@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: finto-pod-esame
+  namespace: tenant-s343940-test
+spec:
+  containers:
+  - name: test-container
+    image: nginx
+    resources:
+      requests:
+        cpu: "1"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "1Gi"

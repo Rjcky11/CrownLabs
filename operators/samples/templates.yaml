@@ -31,7 +31,6 @@ spec:
       resources:
         cpu: 2
         memory: 2Gi
-        disk: 10Gi
         reservedCPUPercentage: 25
       sharedVolumeMounts:
       - sharedVolume:
@@ -54,7 +53,7 @@ spec:
   prettyName: Dark coffee
   description: Too strong to keep it running for a long time
   environmentList:
-    - name: dark-coffee-1
+    - name: dark-coffee
       environmentType: Container
       image: registry.crownlabs.example.com/coffee/dark:strongest
       guiEnabled: false
@@ -62,7 +61,7 @@ spec:
       mountMyDriveVolume: false
       resources:
         cpu: 4
-        memory: 1G
+        memory: 2Gi
         reservedCPUPercentage: 50
   workspace.crownlabs.polito.it/WorkspaceRef:
     name: coffee
@@ -89,8 +88,9 @@ spec:
           - "--disable-marketplace"
       resources:
         cpu: 2
-        memory: 2G
+        memory: 2Gi
         reservedCPUPercentage: 25
+        disk: 5Gi
       rewriteURL: true
   workspace.crownlabs.polito.it/WorkspaceRef:
     name: standalone
@@ -100,8 +100,6 @@ kind: Template
 metadata:
   name: vscode-c-cpp-persistent
   namespace: workspace-standalone
-  annotations:
-    crownlabs.polito.it/custom-number-alerts: "5"
 spec:
   prettyName: vscode c-cpp persistent
   description: A template about vscode
@@ -114,8 +112,8 @@ spec:
         contentPath: /config/workspace
       resources:
         cpu: 2
-        memory: 2G
-        disk: 4G
+        memory: 2Gi
+        disk: 10Gi
         reservedCPUPercentage: 25
       rewriteURL: true
       persistent: true
@@ -131,7 +129,7 @@ spec:
   prettyName: jupyterlab
   description: A template about vscode
   environmentList:
-    - name: jupyterlab-environment
+    - name: jupyter-env
       mountMyDriveVolume: false
       environmentType: Standalone
       image: harbor.crownlabs.polito.it/crownlabs-standalone/jupyterlab:1.0.0
@@ -139,7 +137,7 @@ spec:
         contentPath: /home/crownlabs
       resources:
         cpu: 2
-        memory: 2G
+        memory: 2Gi
         reservedCPUPercentage: 25
   workspace.crownlabs.polito.it/WorkspaceRef:
     name: standalone

@@ -7,7 +7,7 @@ metadata:
 spec:
   prettyName: "A cup of tea from the queen"
   quota:
-    cpu: "8"
+    cpu: 8
     memory: "15Gi"
     disk: "50Gi"
     instances: 3
@@ -21,7 +21,7 @@ metadata:
 spec:
   prettyName: "Just coffee"
   quota:
-    cpu: "10"
+    cpu: 10
     memory: "25Gi"
     disk: "100Gi"
     instances: 5
@@ -35,7 +35,7 @@ metadata:
 spec:
   prettyName: "A bit spicy"
   quota:
-    cpu: "6"
+    cpu: 6
     memory: "20Gi"
     disk: "50Gi"
     instances: 4

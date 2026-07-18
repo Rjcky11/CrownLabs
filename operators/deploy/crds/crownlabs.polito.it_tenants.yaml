@@ -90,7 +90,7 @@ spec:
                   cpu:
                     description: The maximum amount of CPU required by this resource
                       set.
-                    format: int32
+                    format: int64
                     minimum: 1
                     type: integer
                   disk:
