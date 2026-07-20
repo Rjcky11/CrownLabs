@@ -127,7 +127,9 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
             prettyName: values.prettyName,
             autoEnroll: normalizeAutoEnroll(values.autoEnroll),
             cpu: values.cpu,
-            memory: `${values.memory}Gi`, // Kubernetes Quantity format
+            memory: `${values.memory}Gi`, 
+            disk: `${values.disk}Gi`,
+            otherResources: otherResourcesMap,
             labels: {
               'crownlabs.polito.it/operator-selector': 'production',
             },

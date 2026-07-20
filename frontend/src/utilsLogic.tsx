@@ -39,7 +39,7 @@ import type {
   PublicExposure,
   Tenant,
 } from './utils';
-import { convertToGiB, WorkspaceRole, WorkspacesAvailableAction } from './utils';
+import { convertToGiB, WorkspaceRole, WorkspacesAvailableAction, getOriginalK8sKey } from './utils';
 import type { DeepPartial } from '@apollo/client/utilities';
 import type { JointContent } from 'antd/lib/message/interface';
 import type { Notifier } from './contexts/TenantContext';
@@ -348,6 +348,13 @@ export const makeGuiInstance = (
         env => env?.name === templateEnv?.name,
       );
 
+      // Parse and normalize template extended resources keys dynamically
+      const rawOther = (templateEnv?.resources as any)?.otherResources || {};
+      const parsedOther: Record<string, number> = {};
+      Object.entries(rawOther).forEach(([k, v]) => {
+        parsedOther[getOriginalK8sKey(k)] = Number(v);
+      });
+
       return {
         name: envStatus?.name ?? '',
         phase: envStatus?.phase,
@@ -363,6 +370,7 @@ export const makeGuiInstance = (
           disk: templateEnv?.resources?.disk
             ? convertToGiB(templateEnv?.resources?.disk)
             : 0,
+          otherResources: parsedOther,
         },
       } as InstanceEnvironment;
     }) ?? [];
@@ -425,6 +433,14 @@ export const makeGuiInstance = (
       cpu: environments.reduce((acc, env) => acc + env.quota.cpu, 0),
       memory: environments.reduce((acc, env) => acc + env.quota.memory, 0),
       disk: environments.reduce((acc, env) => acc + env.quota.disk, 0),
+      otherResources: environments.reduce((acc, env) => {
+        if (env.quota.otherResources) {
+          Object.entries(env.quota.otherResources).forEach(([key, val]) => {
+            acc[key] = (acc[key] || 0) + val;
+          });
+        }
+        return acc;
+      }, {} as Record<string, number>),
     },
     lastPoweredOffTimestamp:
       (metadata?.annotations as Record<string, string> | undefined)?.[
