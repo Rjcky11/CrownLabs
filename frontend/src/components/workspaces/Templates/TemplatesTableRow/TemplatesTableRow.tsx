@@ -52,7 +52,7 @@ export interface ITemplatesTableRowProps {
   editTemplate: (template: Template) => void;
   createInstance: (
     id: string,
-    labelSelector?: JSON,
+    labelSelector?: Record<string, string>,
   ) => Promise<
     FetchResult<
       CreateInstanceMutation,
@@ -599,7 +599,7 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                       disabled: loadingLabels,
                       onClick: () => {
                         setCreateDisabled(true);
-                        createInstance(template.id, JSON.parse(key))
+                        createInstance(template.id, { [key]: value })
                           .then(() => {
                             refreshClock();
                             setTimeout(setCreateDisabled, 400, false);

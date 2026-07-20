@@ -185,14 +185,17 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
       onError: apolloErrorCatcher,
     });
 
-  const createInstance = (templateId: string, labelSelector?: JSON) =>
+  const createInstance = (
+    templateId: string,
+    labelSelector?: Record<string, string>,
+  ) =>
     createInstanceMutation({
       variables: {
         templateId,
         tenantNamespace,
         tenantId: userId ?? '',
         workspaceNamespace,
-        nodeSelector: labelSelector as Record<string, string> | undefined,
+        nodeSelector: labelSelector,
       },
     }).catch(error => {
       console.error('TemplatesTableLogic createInstance error:', error);
