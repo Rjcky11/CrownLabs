@@ -16,6 +16,7 @@ package forge
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -172,4 +173,15 @@ func InjectOtherResources(source map[string]resource.Quantity, target corev1.Res
 	for resName, qty := range source {
 		target[corev1.ResourceName(resName)] = qty
 	}
+}
+
+// Int64ToUint32 takes an int64 value and converts it into uint32.
+func Int64ToUint32(val int64) uint32 {
+	if val < 0 {
+		return 0
+	}
+	if val > math.MaxUint32 {
+		return math.MaxUint32
+	}
+	return uint32(val)
 }
