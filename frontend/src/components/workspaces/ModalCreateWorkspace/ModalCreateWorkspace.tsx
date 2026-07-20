@@ -4,7 +4,7 @@ import { Modal, Form, Input, Select, Button } from 'antd';
 import { useCreateWorkspaceMutation, useApplyWorkspaceMutation, AutoEnroll } from '../../../generated-types';
 import type { ApolloError } from '@apollo/client';
 import { ErrorContext } from '../../../errorHandling/ErrorContext';
-import { convertToGiB, getOriginalK8sKey } from '../../../utils';
+import { convertToGiB, getOriginalK8sKey, getCamelCaseKey } from '../../../utils';
 import QuotaFields from '../../shared/QuotaFields';
 
 export interface WorkspaceEditData {
@@ -69,7 +69,7 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
         disk: editWorkspace.disk ? convertToGiB(editWorkspace.disk) : undefined,
         otherResources: editWorkspace.otherResources 
           ? Object.entries(editWorkspace.otherResources).map(([k, v]) => ({
-              key: k,
+              key: getCamelCaseKey(k), 
               value: parseFloat(v as string),
             }))
           : [],
@@ -100,7 +100,7 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
       if (isEditMode) {
         // Edit mode: use apply mutation with JSON patch
         const autoEnrollValue = normalizeAutoEnroll(values.autoEnroll);
-        
+
         // Dynamic array handling both standard and extended resource types safely
         const patchJson = JSON.stringify([
           { op: 'replace', path: '/spec/prettyName', value: values.prettyName },
@@ -127,7 +127,9 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
             prettyName: values.prettyName,
             autoEnroll: normalizeAutoEnroll(values.autoEnroll),
             cpu: values.cpu,
-            memory: `${values.memory}Gi`, // Kubernetes Quantity format
+            memory: `${values.memory}Gi`, 
+            disk: values.disk ? `${values.disk}Gi` : '0Gi',
+            otherResources: otherResourcesMap,
             labels: {
               'crownlabs.polito.it/operator-selector': 'production',
             },

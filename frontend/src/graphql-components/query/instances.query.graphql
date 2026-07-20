@@ -78,6 +78,7 @@ query ownedInstances($tenantNamespace: String!) {
                     cpu
                     memory
                     disk
+                    otherResources
                   }
                 }
               }

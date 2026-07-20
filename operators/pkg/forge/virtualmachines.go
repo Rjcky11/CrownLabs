@@ -104,7 +104,7 @@ func VolumeCloudInit(secretName string) virtv1.Volume {
 // object representing the definition of the VM corresponding to a given CrownLabs Environment.
 func VirtualMachineDomain(environment *clv1alpha2.Environment, mountInfos []corev1.VolumeMount) virtv1.DomainSpec {
 	return virtv1.DomainSpec{
-		CPU:       &virtv1.CPU{Cores: environment.Resources.CPU},
+		CPU:       &virtv1.CPU{Cores: Int64ToUint32(environment.Resources.CPU)},
 		Memory:    &virtv1.Memory{Guest: &environment.Resources.Memory},
 		Resources: VirtualMachineResources(environment),
 		Devices: virtv1.Devices{
