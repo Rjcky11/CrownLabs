@@ -6,7 +6,7 @@ import {
   type TenantQuery,
 } from '../../../generated-types';
 import type { RuleRender, RuleObject } from 'antd/es/form';
-import { convertToGiB } from '../../../utils';
+import { convertToGiB, getCamelCaseKey, getOriginalK8sKey } from '../../../utils';
 import { ErrorContext } from '../../../errorHandling/ErrorContext';
 import { CheckOutlined } from '@ant-design/icons';
 import QuotaFields from '../../shared/QuotaFields';
@@ -58,7 +58,8 @@ const TenantPersonalWorkspaceSettings: FC<
       const otherResourcesMap: { [key: string]: string } = {};
       data.otherResources?.forEach((res) => {
         if (res.key && res.value != null) {
-          otherResourcesMap[res.key] = res.value.toString();
+          const k8sKey = getOriginalK8sKey(res.key);
+          otherResourcesMap[k8sKey] = res.value.toString();
         }
       });
 
@@ -134,8 +135,11 @@ const TenantPersonalWorkspaceSettings: FC<
         disk: convertToGiB(currentWorkspace?.disk ?? '0GiB'),
         // Convert otherResources object in an array
         otherResources: currentWorkspace?.otherResources 
-      ? Object.entries(currentWorkspace.otherResources).map(([k, v]) => ({ key: k, value: parseFloat(v as string) }))
-      : [],
+          ? Object.entries(currentWorkspace.otherResources).map(([k, v]) => ({ 
+              key: getCamelCaseKey(k), 
+              value: parseFloat(v as string) 
+            }))
+          : [],
       }}
     >
       <Form.Item
@@ -156,7 +160,7 @@ const TenantPersonalWorkspaceSettings: FC<
           instances: [numberValidator],
           disk: [numberValidator],
           otherResources: [
-            ({ getFieldValue }) => ({
+            () => ({
               validator(_, value) {
                 // If resource is enabled, values are validated
                 if (!value || value.length === 0) return Promise.resolve();

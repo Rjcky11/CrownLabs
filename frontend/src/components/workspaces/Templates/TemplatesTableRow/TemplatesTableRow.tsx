@@ -27,7 +27,7 @@ import {
   OwnedInstancesContext,
   type IQuota,
 } from '../../../../contexts/OwnedInstancesContext';
-import { formatExtendedResourceLabel, type Template } from '../../../../utils';
+import { formatExtendedResourceLabel, getOriginalK8sKey, type Template } from '../../../../utils';
 import { cleanupLabels, convertToGiB, WorkspaceRole } from '../../../../utils';
 import { ModalAlert } from '../../../common/ModalAlert';
 import { TemplatesTableRowSettings } from '../TemplatesTableRowSettings';
@@ -63,42 +63,50 @@ export interface ITemplatesTableRowProps {
   expandRow: (value: string, create: boolean) => void;
 }
 
-
+// Helper per estrarre in modo sicuro le otherResources da qualsiasi livello dell'oggetto
+const extractOtherResources = (obj: any): Record<string, number> => {
+  if (!obj) return {};
+  return (
+    obj.resources?.otherResources ||
+    obj.otherResources ||
+    {}
+  );
+};
 
 const canCreateInstance = (
   template: Template,
   availableQuota: IQuota,
 ): boolean => {
-  // If no quota defined, default to allowing creation
   if (!availableQuota) return true;
 
   const templateCpu = template.resources?.cpu || 0;
   const templateMemory = convertToGiB(template.resources?.memory || '0Gi');
   const templateDisk = convertToGiB(template.resources?.disk || '0Gi');
 
-  // Helper function to match keys agnostically by ignoring case differences (e.g. amdComGpu vs amdcomgpu)
-  const getAvailableExtraResource = (templateKey: string): number => {
-    const sanitize = (s: string) => s.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-    const targetKey = sanitize(templateKey);
-
-    const quotaOther = (availableQuota as any).otherResources || {};
-    for (const [qKey, qVal] of Object.entries(quotaOther)) {
-      if (sanitize(qKey) === targetKey) return Number(qVal) || 0;
-    }
-    return 0;
+  const templateOtherResources = {
+    ...extractOtherResources(template),
+    ...extractOtherResources(template.environmentList?.[0]),
   };
 
-  // Dynamic otherResources quota check
-  let otherResourcesAllowed = true;
-  if ((template as any).otherResources) {
-    for (const [key, val] of Object.entries((template as any).otherResources)) {
-      const required = Number(val) || 0;
-      const available = getAvailableExtraResource(key);
+  const normalizedQuotaOther: Record<string, number> = {};
+  if (availableQuota.otherResources) {
+    Object.entries(availableQuota.otherResources).forEach(([qKey, qVal]) => {
+      const k8sKey = getOriginalK8sKey(qKey);
+      normalizedQuotaOther[k8sKey] = (normalizedQuotaOther[k8sKey] || 0) + Number(qVal);
+    });
+  }
 
-      if (available < required) {
-        otherResourcesAllowed = false;
-        break;
-      }
+  let otherResourcesAllowed = true;
+  for (const [key, val] of Object.entries(templateOtherResources)) {
+    const required = Number(val) || 0;
+    if (required <= 0) continue;
+
+    const k8sKey = getOriginalK8sKey(key);
+    const available = normalizedQuotaOther[k8sKey] || 0;
+
+    if (available < required) {
+      otherResourcesAllowed = false;
+      break;
     }
   }
 
@@ -127,7 +135,11 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
   const stopTimeout = template.cleanup?.stopAfterInactivity ?? 'never';
   const deleteTimeout = template.cleanup?.deleteAfterInactivity ?? 'never';
   const deleteCreationTimeout = template.cleanup?.deleteAfterCreation ?? 'never';
-  const hasInactivity = (stopTimeout && stopTimeout !== 'never') || (deleteTimeout && deleteTimeout !== 'never') || (deleteCreationTimeout && deleteCreationTimeout !== 'never');
+  const hasInactivity =
+    (stopTimeout && stopTimeout !== 'never') ||
+    (deleteTimeout && deleteTimeout !== 'never') ||
+    (deleteCreationTimeout && deleteCreationTimeout !== 'never');
+
   const {
     data: labelsData,
     loading: loadingLabels,
@@ -175,7 +187,7 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
       <ModalAlert
         headTitle={template.name}
         message="Cannot delete this template"
-        description="A template with active instances cannot be deleted. Please delete al the instances associated with this template."
+        description="A template with active instances cannot be deleted. Please delete all the instances associated with this template."
         type="warning"
         buttons={[
           <Button
@@ -255,8 +267,7 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                   title={
                     <div className="p-2">
                       <div className="font-semibold mb-2 text-center">
-                        Multiple Environments ({template.environmentList.length}
-                        )
+                        Multiple Environments ({template.environmentList.length})
                       </div>
                       {template.environmentList.map((env, index) => (
                         <div key={index} className="p-1">
@@ -315,7 +326,9 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                               <Tooltip
                                 title={
                                   <div className="text-left">
-                                    {(stopTimeout !== 'never' || deleteTimeout !== 'never' || deleteCreationTimeout !== 'never') && (
+                                    {(stopTimeout !== 'never' ||
+                                      deleteTimeout !== 'never' ||
+                                      deleteCreationTimeout !== 'never') && (
                                       <>
                                         These instances will be: <br />
                                       </>
@@ -372,9 +385,13 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
               )}
               <label className="ml-3 cursor-pointer">
                 <Space>
-                  {template.description != '' ? (
-                    <Tooltip title={<span>{template.description}</span>}>{template.name}</Tooltip>
-                  ) : (template.name)}
+                  {template.description !== '' ? (
+                    <Tooltip title={<span>{template.description}</span>}>
+                      {template.name}
+                    </Tooltip>
+                  ) : (
+                    template.name
+                  )}
                   {!template.hasMultipleEnvironments &&
                     template.allowPublicExposure && (
                       <Tooltip title="Public Port Exposure - This template allows exposing internal ports to external networks for remote access">
@@ -412,7 +429,9 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                 <Tooltip
                   title={
                     <div className="text-left">
-                      {(stopTimeout !== 'never' || deleteTimeout !== 'never' || deleteCreationTimeout !== 'never') && (
+                      {(stopTimeout !== 'never' ||
+                        deleteTimeout !== 'never' ||
+                        deleteCreationTimeout !== 'never') && (
                         <>
                           These instances will be: <br />
                         </>
@@ -471,28 +490,39 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                     <div className="font-semibold mb-2">
                       Multiple Environments ({template.environmentList.length}):
                     </div>
-                    {template.environmentList.map((env, index) => (
-                      <div
-                        key={index}
-                        className="mb-2 p-2 border-l-2 border-blue-300"
-                      >
-                        <div className="font-medium">Env: {env.name}</div>
-                        <div>GUI: {env.guiEnabled ? 'Yes' : 'No'}</div>
-                        <div>CPU: {env.resources.cpu} core(s)</div>
-                        <div>
-                          RAM:{' '}
-                          {convertToGiB(env.resources.memory) || 'unavailable'}
-                          B
-                        </div>
-                        {env.persistent && (
+                    {template.environmentList.map((env, index) => {
+                      const envOther = extractOtherResources(env);
+                      return (
+                        <div
+                          key={index}
+                          className="mb-2 p-2 border-l-2 border-blue-300"
+                        >
+                          <div className="font-medium">Env: {env.name}</div>
+                          <div>GUI: {env.guiEnabled ? 'Yes' : 'No'}</div>
+                          <div>CPU: {env.resources.cpu} core(s)</div>
                           <div>
-                            DISK:{' '}
-                            {convertToGiB(env.resources.disk) || 'unavailable'}
-                            B
+                            RAM:{' '}
+                            {convertToGiB(env.resources.memory) || 'unavailable'}{' '}
+                            GiB
                           </div>
-                        )}
-                      </div>
-                    ))}
+                          {env.persistent && (
+                            <div>
+                              DISK:{' '}
+                              {convertToGiB(env.resources.disk) || 'unavailable'}{' '}
+                              GiB
+                            </div>
+                          )}
+                          {Object.entries(envOther).map(([key, val]: [string, number | string]) => {
+                            const numericVal = Number(val);
+                            return numericVal > 0 ? (
+                              <div key={key}>
+                                {formatExtendedResourceLabel(key)}: {numericVal}
+                              </div>
+                            ) : null;
+                          })}
+                        </div>
+                      );
+                    })}
                     <div className="mt-2 pt-2 border-t border-gray-300">
                       <div className="font-medium">Total Resources:</div>
                       <div>Total CPU: {template.resources.cpu} core(s)</div>
@@ -504,6 +534,28 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                           Total DISK: {convertToGiB(template.resources.disk) || 'unavailable'} GiB
                         </div>
                       )}
+                      {(() => {
+                        const totalOther: Record<string, number> = {};
+                        template.environmentList.forEach(env => {
+                          Object.entries(extractOtherResources(env)).forEach(([k, v]) => {
+                            const k8sKey = getOriginalK8sKey(k);
+                            totalOther[k8sKey] = (totalOther[k8sKey] || 0) + Number(v);
+                          });
+                        });
+                        Object.entries(extractOtherResources(template)).forEach(([k, v]) => {
+                          const k8sKey = getOriginalK8sKey(k);
+                          if (!totalOther[k8sKey]) totalOther[k8sKey] = Number(v);
+                        });
+
+                        return Object.entries(totalOther).map(([key, val]: [string, number]) => {
+                          const numericVal = Number(val);
+                          return numericVal > 0 ? (
+                            <div key={key}>
+                              Total {formatExtendedResourceLabel(key)}: {numericVal}
+                            </div>
+                          ) : null;
+                        });
+                      })()}
                     </div>
                   </div>
                 ) : (
@@ -519,20 +571,24 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                     <div>
                       {template.persistent
                         ? ` DISK: ${convertToGiB(template.resources.disk) ||
-                        'unavailable'
-                        }GiB`
-                        : ``}
+                            'unavailable'
+                          }GiB`
+                        : ''}
                     </div>
-                    {template.otherResources &&
-                      Object.entries(template.otherResources).map(([key, val]) => {
+                    {(() => {
+                      const singleOther = {
+                        ...extractOtherResources(template),
+                        ...extractOtherResources(template.environmentList?.[0]),
+                      };
+                      return Object.entries(singleOther).map(([key, val]: [string, number]) => {
                         const numericVal = Number(val);
                         return numericVal > 0 ? (
                           <div key={key}>
                             {formatExtendedResourceLabel(key)}: {numericVal}
                           </div>
                         ) : null;
-                      })
-                    }
+                      });
+                    })}
                   </>
                 )}
               </>
@@ -621,29 +677,29 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                 items:
                   loadingLabels || labelsError
                     ? [
-                      {
-                        key: 'error',
-                        label: loadingLabels
-                          ? 'Loading labels...'
-                          : 'Error loading labels',
-                        disabled: true,
-                      },
-                    ]
+                        {
+                          key: 'error',
+                          label: loadingLabels
+                            ? 'Loading labels...'
+                            : 'Error loading labels',
+                          disabled: true,
+                        },
+                      ]
                     : labelsData?.labels?.map(({ key, value }) => ({
-                      key: JSON.stringify({ [key]: value }),
-                      label: `${cleanupLabels(key)}=${value}`,
-                      disabled: loadingLabels,
-                      onClick: () => {
-                        setCreateDisabled(true);
-                        createInstance(template.id, JSON.parse(key))
-                          .then(() => {
-                            refreshClock();
-                            setTimeout(setCreateDisabled, 400, false);
-                            expandRow(template.id, true);
-                          })
-                          .catch(() => setCreateDisabled(false));
-                      },
-                    })) || [],
+                        key: JSON.stringify({ [key]: value }),
+                        label: `${cleanupLabels(key)}=${value}`,
+                        disabled: loadingLabels,
+                        onClick: () => {
+                          setCreateDisabled(true);
+                          createInstance(template.id, JSON.parse(key))
+                            .then(() => {
+                              refreshClock();
+                              setTimeout(setCreateDisabled, 400, false);
+                              expandRow(template.id, true);
+                            })
+                            .catch(() => setCreateDisabled(false));
+                        },
+                      })) || [],
               }}
               onClick={createInstanceHandler}
               disabled={createDisabled || !canCreate}

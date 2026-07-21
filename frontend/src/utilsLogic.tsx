@@ -62,6 +62,30 @@ interface ItPolitoCrownlabsV1alpha2TemplateAlias {
   };
 }
 
+// Helper to extract and normalize otherResources both as Objects and Arrays
+const parseOtherResources = (rawOther: any): Record<string, number> => {
+  if (!rawOther) return {};
+  const parsed: Record<string, number> = {};
+
+  if (Array.isArray(rawOther)) {
+    rawOther.forEach((item: any) => {
+      if (item && item.key && item.value != null) {
+        const k8sKey = getOriginalK8sKey(item.key);
+        parsed[k8sKey] = (parsed[k8sKey] || 0) + (Number(item.value) || 0);
+      }
+    });
+  } else if (typeof rawOther === 'object') {
+    Object.entries(rawOther).forEach(([k, v]) => {
+      if (k && v != null) {
+        const k8sKey = getOriginalK8sKey(k);
+        parsed[k8sKey] = (parsed[k8sKey] || 0) + (Number(v) || 0);
+      }
+    });
+  }
+
+  return parsed;
+};
+
 export const makeGuiTemplate = (
   tq: ItPolitoCrownlabsV1alpha2TemplateAlias,
 ): Template => {
@@ -77,6 +101,7 @@ export const makeGuiTemplate = (
   const hasGUI = environmentList.some(env => env?.guiEnabled);
   const hasPersistent = environmentList.some(env => env?.persistent);
 
+  // Aggregate Resources from Environments of template
   const aggregatedResources = environmentList.reduce(
     (acc, env) => {
       if (env?.resources) {
@@ -87,10 +112,15 @@ export const makeGuiTemplate = (
         acc.diskSum += env.resources.disk
           ? convertToGiB(env.resources.disk)
           : 0;
+
+        const envOther = parseOtherResources((env.resources as any)?.otherResources);
+        Object.entries(envOther).forEach(([k, v]) => {
+          acc.otherResources[k] = (acc.otherResources[k] || 0) + v;
+        });
       }
       return acc;
     },
-    { cpu: 0, memorySum: 0, diskSum: 0 },
+    { cpu: 0, memorySum: 0, diskSum: 0, otherResources: {} as Record<string, number> },
   );
 
   return {
@@ -118,6 +148,7 @@ export const makeGuiTemplate = (
         aggregatedResources.diskSum > 0
           ? `${aggregatedResources.diskSum}G`
           : '',
+      otherResources: aggregatedResources.otherResources,
     },
     environmentList: environmentList.map(env => ({
       name: env?.name ?? '',
@@ -143,6 +174,7 @@ export const makeGuiTemplate = (
         memory: env?.resources?.memory ?? '',
         disk: env?.resources?.disk ?? '',
         reservedCPUPercentage: env?.resources?.reservedCPUPercentage ?? 50,
+        otherResources: parseOtherResources((env?.resources as any)?.otherResources),
       },
     })),
     hasMultipleEnvironments,
@@ -348,12 +380,7 @@ export const makeGuiInstance = (
         env => env?.name === templateEnv?.name,
       );
 
-      // Parse and normalize template extended resources keys dynamically
-      const rawOther = (templateEnv?.resources as any)?.otherResources || {};
-      const parsedOther: Record<string, number> = {};
-      Object.entries(rawOther).forEach(([k, v]) => {
-        parsedOther[getOriginalK8sKey(k)] = Number(v);
-      });
+      const parsedOther = parseOtherResources((templateEnv?.resources as any)?.otherResources);
 
       return {
         name: envStatus?.name ?? '',
@@ -436,7 +463,8 @@ export const makeGuiInstance = (
       otherResources: environments.reduce((acc, env) => {
         if (env.quota.otherResources) {
           Object.entries(env.quota.otherResources).forEach(([key, val]) => {
-            acc[key] = (acc[key] || 0) + val;
+            const k8sKey = getOriginalK8sKey(key);
+            acc[k8sKey] = (acc[k8sKey] || 0) + val;
           });
         }
         return acc;
@@ -734,19 +762,39 @@ export const getTemplatesMapped = (
         guiEnabled: env.guiEnabled || false,
         persistent: env.persistent || false,
         environmentType: env.environmentType,
-        resources: { cpu: 0, disk: '', memory: '' },
+        resources: {
+          cpu: env.quota?.cpu || 0,
+          disk: env.quota?.disk ? `${env.quota.disk}Gi` : '',
+          memory: env.quota?.memory ? `${env.quota.memory}Gi` : '',
+          otherResources: env.quota?.otherResources || {},
+        },
         image: '',
         mountMyDriveVolume: false,
         sharedVolumeMounts: [],
         rewriteUrl: false,
       })) || [];
 
+    const aggregatedOther: Record<string, number> = {};
+    environments?.forEach(env => {
+      if (env.quota?.otherResources) {
+        Object.entries(env.quota.otherResources).forEach(([k, v]) => {
+          const k8sKey = getOriginalK8sKey(k);
+          aggregatedOther[k8sKey] = (aggregatedOther[k8sKey] || 0) + v;
+        });
+      }
+    });
+
     return {
       id: templateId,
       name: templatePrettyName,
       gui,
       persistent,
-      resources: { cpu: 0, memory: '', disk: '' },
+      resources: {
+        cpu: environments?.reduce((acc, e) => acc + e.quota.cpu, 0) || 0,
+        memory: `${environments?.reduce((acc, e) => acc + e.quota.memory, 0) || 0}Gi`,
+        disk: `${environments?.reduce((acc, e) => acc + e.quota.disk, 0) || 0}Gi`,
+        otherResources: aggregatedOther,
+      },
       instances: instancesSorted || instancesFiltered,
       workspaceName,
       workspaceNamespace: 'workspace-' + workspaceName,

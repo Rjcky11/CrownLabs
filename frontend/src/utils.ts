@@ -27,6 +27,7 @@ export type Resources = {
   disk: string;
   memory: string;
   reservedCPUPercentage?: number;
+  otherResources?: Record<string, number> | null;
 };
 export type TemplateEnvironment = {
   name: string;

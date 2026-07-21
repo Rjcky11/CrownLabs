@@ -10,7 +10,7 @@ import type {
 } from '../../../generated-types';
 import { useCreateTemplateMutation } from '../../../generated-types';
 import type { Workspace } from '../../../utils';
-import { WorkspaceRole } from '../../../utils';
+import { WorkspaceRole, getOriginalK8sKey } from '../../../utils';
 import UserListLogic from '../../accountPage/UserListLogic/UserListLogic';
 import Box from '../../common/Box';
 import ModalCreateTemplate from '../ModalCreateTemplate';
@@ -55,7 +55,7 @@ const WorkspaceContainer: FC<IWorkspaceContainerProps> = ({ ...props }) => {
           memory: `${formEnv.ram}Gi`,
           otherResources: Object.fromEntries(
             Object.entries((formEnv as any).otherResources || {}).map(
-              ([key, val]) => [key, String(val ?? 0)]
+              ([key, val]) => [getOriginalK8sKey(key), String(val ?? 0)]
             )
           ),
         },
