@@ -27,7 +27,11 @@ import {
   OwnedInstancesContext,
   type IQuota,
 } from '../../../../contexts/OwnedInstancesContext';
-import { formatExtendedResourceLabel, getOriginalK8sKey, type Template } from '../../../../utils';
+import {
+  formatExtendedResourceLabel,
+  getOriginalK8sKey,
+  type Template,
+} from '../../../../utils';
 import { cleanupLabels, convertToGiB, WorkspaceRole } from '../../../../utils';
 import { ModalAlert } from '../../../common/ModalAlert';
 import { TemplatesTableRowSettings } from '../TemplatesTableRowSettings';
@@ -62,17 +66,6 @@ export interface ITemplatesTableRowProps {
   >;
   expandRow: (value: string, create: boolean) => void;
 }
-
-// Helper per estrarre in modo sicuro le otherResources da qualsiasi livello dell'oggetto
-const extractOtherResources = (obj: any): Record<string, number> => {
-  if (!obj) return {};
-  return (
-    obj.resources?.otherResources ||
-    obj.otherResources ||
-    {}
-  );
-};
-
 const canCreateInstance = (
   template: Template,
   availableQuota: IQuota,
@@ -84,15 +77,15 @@ const canCreateInstance = (
   const templateDisk = convertToGiB(template.resources?.disk || '0Gi');
 
   const templateOtherResources = {
-    ...extractOtherResources(template),
-    ...extractOtherResources(template.environmentList?.[0]),
+    ...template.environmentList?.[0]?.resources?.otherResources,
   };
 
   const normalizedQuotaOther: Record<string, number> = {};
   if (availableQuota.otherResources) {
     Object.entries(availableQuota.otherResources).forEach(([qKey, qVal]) => {
       const k8sKey = getOriginalK8sKey(qKey);
-      normalizedQuotaOther[k8sKey] = (normalizedQuotaOther[k8sKey] || 0) + Number(qVal);
+      normalizedQuotaOther[k8sKey] =
+        (normalizedQuotaOther[k8sKey] || 0) + Number(qVal);
     });
   }
 
@@ -134,7 +127,8 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
 
   const stopTimeout = template.cleanup?.stopAfterInactivity ?? 'never';
   const deleteTimeout = template.cleanup?.deleteAfterInactivity ?? 'never';
-  const deleteCreationTimeout = template.cleanup?.deleteAfterCreation ?? 'never';
+  const deleteCreationTimeout =
+    template.cleanup?.deleteAfterCreation ?? 'never';
   const hasInactivity =
     (stopTimeout && stopTimeout !== 'never') ||
     (deleteTimeout && deleteTimeout !== 'never') ||
@@ -267,7 +261,8 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                   title={
                     <div className="p-2">
                       <div className="font-semibold mb-2 text-center">
-                        Multiple Environments ({template.environmentList.length})
+                        Multiple Environments ({template.environmentList.length}
+                        )
                       </div>
                       {template.environmentList.map((env, index) => (
                         <div key={index} className="p-1">
@@ -335,17 +330,23 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                                     )}
                                     {stopTimeout !== 'never' && (
                                       <>
-                                        ▸ powered off after <b>{stopTimeout}</b> of inactivity<br />
+                                        ▸ powered off after <b>{stopTimeout}</b>{' '}
+                                        of inactivity
+                                        <br />
                                       </>
                                     )}
                                     {deleteTimeout !== 'never' && (
                                       <>
-                                        ▸ deleted after being stopped for <b>{deleteTimeout}</b><br />
+                                        ▸ deleted after being stopped for{' '}
+                                        <b>{deleteTimeout}</b>
+                                        <br />
                                       </>
                                     )}
                                     {deleteCreationTimeout !== 'never' && (
                                       <>
-                                        ▸ deleted after <b>{deleteCreationTimeout}</b> from creation
+                                        ▸ deleted after{' '}
+                                        <b>{deleteCreationTimeout}</b> from
+                                        creation
                                       </>
                                     )}
                                   </div>
@@ -438,17 +439,21 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                       )}
                       {stopTimeout !== 'never' && (
                         <>
-                          ▸ powered off after <b>{stopTimeout}</b> of inactivity<br />
+                          ▸ powered off after <b>{stopTimeout}</b> of inactivity
+                          <br />
                         </>
                       )}
                       {deleteTimeout !== 'never' && (
                         <>
-                          ▸ deleted after being stopped for <b>{deleteTimeout}</b><br />
+                          ▸ deleted after being stopped for{' '}
+                          <b>{deleteTimeout}</b>
+                          <br />
                         </>
                       )}
                       {deleteCreationTimeout !== 'never' && (
                         <>
-                          ▸ deleted after <b>{deleteCreationTimeout}</b> from creation
+                          ▸ deleted after <b>{deleteCreationTimeout}</b> from
+                          creation
                         </>
                       )}
                     </div>
@@ -491,7 +496,7 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                       Multiple Environments ({template.environmentList.length}):
                     </div>
                     {template.environmentList.map((env, index) => {
-                      const envOther = extractOtherResources(env);
+                      const envOther = env.resources?.otherResources;
                       return (
                         <div
                           key={index}
@@ -502,24 +507,29 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                           <div>CPU: {env.resources.cpu} core(s)</div>
                           <div>
                             RAM:{' '}
-                            {convertToGiB(env.resources.memory) || 'unavailable'}{' '}
+                            {convertToGiB(env.resources.memory) ||
+                              'unavailable'}{' '}
                             GiB
                           </div>
                           {env.persistent && (
                             <div>
                               DISK:{' '}
-                              {convertToGiB(env.resources.disk) || 'unavailable'}{' '}
+                              {convertToGiB(env.resources.disk) ||
+                                'unavailable'}{' '}
                               GiB
                             </div>
                           )}
-                          {Object.entries(envOther).map(([key, val]: [string, number | string]) => {
-                            const numericVal = Number(val);
-                            return numericVal > 0 ? (
-                              <div key={key}>
-                                {formatExtendedResourceLabel(key)}: {numericVal}
-                              </div>
-                            ) : null;
-                          })}
+                          {Object.entries(envOther || {}).map(
+                            ([key, val]: [string, number | string]) => {
+                              const numericVal = Number(val);
+                              return numericVal > 0 ? (
+                                <div key={key}>
+                                  {formatExtendedResourceLabel(key)}:{' '}
+                                  {numericVal}
+                                </div>
+                              ) : null;
+                            },
+                          )}
                         </div>
                       );
                     })}
@@ -527,31 +537,49 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                       <div className="font-medium">Total Resources:</div>
                       <div>Total CPU: {template.resources.cpu} core(s)</div>
                       <div>
-                        Total RAM: {convertToGiB(template.resources.memory) || 'unavailable'} GiB
+                        Total RAM:{' '}
+                        {convertToGiB(template.resources.memory) ||
+                          'unavailable'}{' '}
+                        GiB
                       </div>
                       {template.persistent && (
                         <div>
-                          Total DISK: {convertToGiB(template.resources.disk) || 'unavailable'} GiB
+                          Total DISK:{' '}
+                          {convertToGiB(template.resources.disk) ||
+                            'unavailable'}{' '}
+                          GiB
                         </div>
                       )}
                       {(() => {
                         const totalOther: Record<string, number> = {};
                         template.environmentList.forEach(env => {
-                          Object.entries(extractOtherResources(env)).forEach(([k, v]) => {
+                          if (env.resources?.otherResources) {
+                            Object.entries(
+                              env.resources.otherResources,
+                            ).forEach(([k, v]) => {
+                              const k8sKey = getOriginalK8sKey(k);
+                              totalOther[k8sKey] =
+                                (totalOther[k8sKey] || 0) + Number(v);
+                            });
+                          }
+                        });
+                        if (template.resources?.otherResources) {
+                          Object.entries(
+                            template.resources.otherResources,
+                          ).forEach(([k, v]) => {
                             const k8sKey = getOriginalK8sKey(k);
-                            totalOther[k8sKey] = (totalOther[k8sKey] || 0) + Number(v);
+                            if (!totalOther[k8sKey]) {
+                              totalOther[k8sKey] = Number(v);
+                            }
                           });
-                        });
-                        Object.entries(extractOtherResources(template)).forEach(([k, v]) => {
-                          const k8sKey = getOriginalK8sKey(k);
-                          if (!totalOther[k8sKey]) totalOther[k8sKey] = Number(v);
-                        });
+                        }
 
-                        return Object.entries(totalOther).map(([key, val]: [string, number]) => {
+                        return Object.entries(totalOther).map(([key, val]) => {
                           const numericVal = Number(val);
                           return numericVal > 0 ? (
                             <div key={key}>
-                              Total {formatExtendedResourceLabel(key)}: {numericVal}
+                              Total {formatExtendedResourceLabel(key)}:{' '}
+                              {numericVal}
                             </div>
                           ) : null;
                         });
@@ -570,17 +598,17 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                     </div>
                     <div>
                       {template.persistent
-                        ? ` DISK: ${convertToGiB(template.resources.disk) ||
+                        ? ` DISK: ${
+                            convertToGiB(template.resources.disk) ||
                             'unavailable'
                           }GiB`
                         : ''}
                     </div>
                     {(() => {
                       const singleOther = {
-                        ...extractOtherResources(template),
-                        ...extractOtherResources(template.environmentList?.[0]),
+                        ...template.environmentList?.[0]?.resources?.otherResources,
                       };
-                      return Object.entries(singleOther).map(([key, val]: [string, number]) => {
+                      return Object.entries(singleOther).map(([key, val]) => {
                         const numericVal = Number(val);
                         return numericVal > 0 ? (
                           <div key={key}>
@@ -588,7 +616,7 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                           </div>
                         ) : null;
                       });
-                    })}
+                    })()}
                   </>
                 )}
               </>

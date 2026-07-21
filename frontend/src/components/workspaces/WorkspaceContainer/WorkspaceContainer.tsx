@@ -54,9 +54,10 @@ const WorkspaceContainer: FC<IWorkspaceContainerProps> = ({ ...props }) => {
           reservedCPUPercentage: formEnv.reservedCpu,
           memory: `${formEnv.ram}Gi`,
           otherResources: Object.fromEntries(
-            Object.entries((formEnv as any).otherResources || {}).map(
-              ([key, val]) => [getOriginalK8sKey(key), String(val ?? 0)]
-            )
+            Object.entries(formEnv.otherResources || {}).map(([key, val]) => [
+              getOriginalK8sKey(key),
+              String(val ?? 0),
+            ]),
           ),
         },
         guiEnabled: formEnv.gui,
@@ -107,7 +108,8 @@ const WorkspaceContainer: FC<IWorkspaceContainerProps> = ({ ...props }) => {
         environmentList: environmentList,
         cleanupDeleteAfterCreation: t.cleanup?.deleteAfterCreation ?? 'never',
         cleanupStopAfterInactivity: t.cleanup?.stopAfterInactivity ?? 'never',
-        cleanupDeleteAfterInactivity: t.cleanup?.deleteAfterInactivity ?? 'never',
+        cleanupDeleteAfterInactivity:
+          t.cleanup?.deleteAfterInactivity ?? 'never',
         allowPublicExposure: t.allowPublicExposure,
         ...(t.nodeSelector !== null && { nodeSelector: t.nodeSelector }),
       },
@@ -168,7 +170,13 @@ const WorkspaceContainer: FC<IWorkspaceContainerProps> = ({ ...props }) => {
 
                 {/* Right Header Side: Displaying QuotaStatus and Action Button */}
                 <div className="h-full flex-none flex justify-center items-center px-4">
-                  <div style={{ marginRight: '64px', display: 'flex', alignItems: 'center' }}>
+                  <div
+                    style={{
+                      marginRight: '64px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
                     <QuotaDisplay workspaceName={workspace.name} />
                   </div>
 

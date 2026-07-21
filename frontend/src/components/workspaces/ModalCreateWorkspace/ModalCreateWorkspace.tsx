@@ -1,10 +1,18 @@
 import type { FC } from 'react';
 import { useState, useContext, useEffect } from 'react';
 import { Modal, Form, Input, Select, Button } from 'antd';
-import { useCreateWorkspaceMutation, useApplyWorkspaceMutation, AutoEnroll } from '../../../generated-types';
+import {
+  useCreateWorkspaceMutation,
+  useApplyWorkspaceMutation,
+  AutoEnroll,
+} from '../../../generated-types';
 import type { ApolloError } from '@apollo/client';
 import { ErrorContext } from '../../../errorHandling/ErrorContext';
-import { convertToGiB, getOriginalK8sKey, getCamelCaseKey } from '../../../utils';
+import {
+  convertToGiB,
+  getOriginalK8sKey,
+  getCamelCaseKey,
+} from '../../../utils';
 import QuotaFields from '../../shared/QuotaFields';
 
 export interface WorkspaceEditData {
@@ -67,9 +75,9 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
         memory: convertToGiB(editWorkspace.memory),
         instances: editWorkspace.instances,
         disk: editWorkspace.disk ? convertToGiB(editWorkspace.disk) : undefined,
-        otherResources: editWorkspace.otherResources 
+        otherResources: editWorkspace.otherResources
           ? Object.entries(editWorkspace.otherResources).map(([k, v]) => ({
-              key: getCamelCaseKey(k), 
+              key: getCamelCaseKey(k),
               value: parseFloat(v as string),
             }))
           : [],
@@ -80,7 +88,9 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
   }, [show, editWorkspace, form]);
 
   // Convert GraphQL enum value to Kubernetes expected value
-  const normalizeAutoEnroll = (value: string | undefined | null): AutoEnroll | null => {
+  const normalizeAutoEnroll = (
+    value: string | undefined | null,
+  ): AutoEnroll | null => {
     if (!value || value === AutoEnroll.Empty) return null;
     return value as AutoEnroll;
   };
@@ -90,7 +100,7 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
     try {
       // Map the form array into a Kubernetes flat string object dynamically using env variables
       const otherResourcesMap: { [key: string]: string } = {};
-      values.otherResources?.forEach((res) => {
+      values.otherResources?.forEach(res => {
         if (res.key && res.value != null) {
           const k8sKey = getOriginalK8sKey(res.key);
           otherResourcesMap[k8sKey] = res.value.toString();
@@ -106,10 +116,26 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
           { op: 'replace', path: '/spec/prettyName', value: values.prettyName },
           { op: 'replace', path: '/spec/autoEnroll', value: autoEnrollValue },
           { op: 'replace', path: '/spec/quota/cpu', value: values.cpu },
-          { op: 'replace', path: '/spec/quota/memory', value: `${values.memory}Gi` },
-          { op: 'replace', path: '/spec/quota/instances', value: values.instances },
-          { op: 'replace', path: '/spec/quota/disk', value: values.disk ? `${values.disk}Gi` : '0Gi' },
-          { op: 'replace', path: '/spec/quota/otherResources', value: otherResourcesMap },
+          {
+            op: 'replace',
+            path: '/spec/quota/memory',
+            value: `${values.memory}Gi`,
+          },
+          {
+            op: 'replace',
+            path: '/spec/quota/instances',
+            value: values.instances,
+          },
+          {
+            op: 'replace',
+            path: '/spec/quota/disk',
+            value: values.disk ? `${values.disk}Gi` : '0Gi',
+          },
+          {
+            op: 'replace',
+            path: '/spec/quota/otherResources',
+            value: otherResourcesMap,
+          },
         ]);
 
         await applyWorkspace({
@@ -127,7 +153,7 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
             prettyName: values.prettyName,
             autoEnroll: normalizeAutoEnroll(values.autoEnroll),
             cpu: values.cpu,
-            memory: `${values.memory}Gi`, 
+            memory: `${values.memory}Gi`,
             disk: values.disk ? `${values.disk}Gi` : '0Gi',
             otherResources: otherResourcesMap,
             labels: {
@@ -182,7 +208,7 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
           memory: 8,
           instances: 5,
           disk: 10,
-          otherResources: []
+          otherResources: [],
         }}
       >
         <Form.Item
@@ -197,8 +223,16 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
             },
             {
               validator: async (_, value) => {
-                if (!isEditMode && value && existingWorkspaceNames.includes(value)) {
-                  return Promise.reject(new Error(`Workspace "${value}" already exists. Please choose a different name.`));
+                if (
+                  !isEditMode &&
+                  value &&
+                  existingWorkspaceNames.includes(value)
+                ) {
+                  return Promise.reject(
+                    new Error(
+                      `Workspace "${value}" already exists. Please choose a different name.`,
+                    ),
+                  );
                 }
                 return Promise.resolve();
               },
@@ -236,20 +270,22 @@ const ModalCreateWorkspace: FC<IModalCreateWorkspaceProps> = ({
           rules={{
             cpu: [{ required: true, message: 'Please input CPU quota!' }],
             memory: [{ required: true, message: 'Please input memory quota!' }],
-            instances: [{ required: true, message: 'Please input max instances!' }],
-            disk: [{ required: true, message: 'Please input disk quota!' }]
+            instances: [
+              { required: true, message: 'Please input max instances!' },
+            ],
+            disk: [{ required: true, message: 'Please input disk quota!' }],
           }}
           limits={{
             cpu: { min: 1, max: 128 },
             memory: { min: 1, max: 512 },
             instances: { min: 1, max: 100 },
-            disk: { min: 0, max: 2048 }
+            disk: { min: 0, max: 2048 },
           }}
           tooltips={{
             cpu: 'Maximum number of CPU cores',
             memory: 'Maximum memory in gibibytes',
             instances: 'Maximum number of concurrent instances',
-            disk: 'Maximum disk storage allocation'
+            disk: 'Maximum disk storage allocation',
           }}
         />
       </Form>

@@ -3,7 +3,9 @@ import { Phase2, type TenantQuery } from '../generated-types';
 import { convertToGiB, getOriginalK8sKey, type Instance } from '../utils';
 
 // Internal helper to convert GraphQL camelCase keys into standard K8s format
-function normalizeTotalOtherResources(rawResources?: Record<string, any> | null): Record<string, number> {
+function normalizeTotalOtherResources(
+  rawResources?: Record<string, number> | null,
+): Record<string, number> {
   if (!rawResources) return {};
   const normalized: Record<string, number> = {};
   Object.keys(rawResources).forEach(key => {
@@ -42,12 +44,12 @@ export function calculateWorkspaceConsumedQuota(
 
       if (instance.resources.otherResources) {
         const extResources = instance.resources.otherResources;
-        
+
         if (!current.otherResources) current.otherResources = {};
         Object.keys(extResources).forEach(key => {
           // Normalize the instance resource key to match the standard K8s format used in total quotas
           const normalizedKey = getOriginalK8sKey(key);
-          
+
           current.otherResources![normalizedKey] =
             (current.otherResources![normalizedKey] || 0) +
             Number(extResources[key]);
@@ -81,7 +83,9 @@ export function calculateWorkspaceTotalQuota(
               : 0,
             disk: workspaceQuota?.disk ? convertToGiB(workspaceQuota.disk) : 0,
             // Normalize keys coming from GraphQL before saving them to totals
-            otherResources: normalizeTotalOtherResources(workspaceQuota?.otherResources),
+            otherResources: normalizeTotalOtherResources(
+              workspaceQuota?.otherResources,
+            ),
           },
         };
       },
@@ -99,9 +103,13 @@ export function calculateWorkspaceTotalQuota(
       memory: personalWorkspaceQuota?.memory
         ? convertToGiB(personalWorkspaceQuota?.memory)
         : 0,
-      disk: personalWorkspaceQuota?.disk ? convertToGiB(personalWorkspaceQuota.disk) : 0,
+      disk: personalWorkspaceQuota?.disk
+        ? convertToGiB(personalWorkspaceQuota.disk)
+        : 0,
       // Normalize personal workspace keys as well
-      otherResources: normalizeTotalOtherResources(personalWorkspaceQuota?.otherResources),
+      otherResources: normalizeTotalOtherResources(
+        personalWorkspaceQuota?.otherResources,
+      ),
     };
   }
 

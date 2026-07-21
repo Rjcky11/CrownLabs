@@ -14,9 +14,7 @@ import {
   OwnedInstancesContext,
   type IQuota,
 } from '../../../contexts/OwnedInstancesContext';
-import {
-  formatExtendedResourceLabel,
-} from '../../../utils';
+import { formatExtendedResourceLabel } from '../../../utils';
 
 const { Text } = Typography;
 
@@ -54,7 +52,7 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
     if (percentage == 100) return '#ff4d4f';
     if (percentage >= 80) return '#faad14';
     if (percentage >= 50) return '#fff652';
-    return '#52c41a'; 
+    return '#52c41a';
   };
 
   // Helper function to determine the hover tooltip message based on resource utilization
@@ -66,13 +64,27 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
   };
 
   // Compute standard infrastructure percentages
-  const cpuPct = calculatePercentage(Number(workspaceConsumedQuota.cpu), Number(workspaceTotalQuota.cpu));
-  const memoryPct = calculatePercentage(workspaceConsumedQuota.memory, workspaceTotalQuota.memory);
-  const diskPct = calculatePercentage(workspaceConsumedQuota.disk, workspaceTotalQuota.disk);
-  const instancesPct = calculatePercentage(workspaceConsumedQuota.instances, workspaceTotalQuota.instances);
+  const cpuPct = calculatePercentage(
+    Number(workspaceConsumedQuota.cpu),
+    Number(workspaceTotalQuota.cpu),
+  );
+  const memoryPct = calculatePercentage(
+    workspaceConsumedQuota.memory,
+    workspaceTotalQuota.memory,
+  );
+  const diskPct = calculatePercentage(
+    workspaceConsumedQuota.disk,
+    workspaceTotalQuota.disk,
+  );
+  const instancesPct = calculatePercentage(
+    workspaceConsumedQuota.instances,
+    workspaceTotalQuota.instances,
+  );
 
   // Compute custom extended resources percentages dynamically
-  const extendedResourcesKeys = Object.keys(workspaceTotalQuota.otherResources || {});
+  const extendedResourcesKeys = Object.keys(
+    workspaceTotalQuota.otherResources || {},
+  );
   const extendedPcts = extendedResourcesKeys.map(key => {
     const consumed = Number(workspaceConsumedQuota.otherResources?.[key] ?? 0);
     const total = Number(workspaceTotalQuota.otherResources?.[key] ?? 0);
@@ -80,7 +92,13 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
   });
 
   // Evaluate the worst-case scenario metric among all available hardware quotas
-  const maxPercentage = Math.max(cpuPct, memoryPct, diskPct, instancesPct, ...extendedPcts);
+  const maxPercentage = Math.max(
+    cpuPct,
+    memoryPct,
+    diskPct,
+    instancesPct,
+    ...extendedPcts,
+  );
   const mainStatusColor = getResourceStatusColor(maxPercentage);
 
   // Layout specification for individual status indicators inside the dropdown items
@@ -108,7 +126,13 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
           <span style={indicatorStyle(getResourceStatusColor(cpuPct))} />
           <span style={verticalDividerStyle} />
           <DesktopOutlined className="primary-color-fg" />
-          <Text>CPU: <strong>{workspaceConsumedQuota.cpu}/{workspaceTotalQuota.cpu}</strong> ({cpuPct.toFixed(0)}%)</Text>
+          <Text>
+            CPU:{' '}
+            <strong>
+              {workspaceConsumedQuota.cpu}/{workspaceTotalQuota.cpu}
+            </strong>{' '}
+            ({cpuPct.toFixed(0)}%)
+          </Text>
         </Space>
       ),
     },
@@ -119,7 +143,14 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
           <span style={indicatorStyle(getResourceStatusColor(memoryPct))} />
           <span style={verticalDividerStyle} />
           <DatabaseOutlined className="success-color-fg" />
-          <Text>RAM: <strong>{workspaceConsumedQuota.memory.toFixed(1)}/{workspaceTotalQuota.memory.toFixed(1)}Gi</strong> ({memoryPct.toFixed(0)}%)</Text>
+          <Text>
+            RAM:{' '}
+            <strong>
+              {workspaceConsumedQuota.memory.toFixed(1)}/
+              {workspaceTotalQuota.memory.toFixed(1)}Gi
+            </strong>{' '}
+            ({memoryPct.toFixed(0)}%)
+          </Text>
         </Space>
       ),
     },
@@ -130,7 +161,14 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
           <span style={indicatorStyle(getResourceStatusColor(diskPct))} />
           <span style={verticalDividerStyle} />
           <HddOutlined style={{ color: '#13c2c2' }} />
-          <Text>Disk: <strong>{workspaceConsumedQuota.disk.toFixed(1)}/{workspaceTotalQuota.disk.toFixed(1)}Gi</strong> ({diskPct.toFixed(0)}%)</Text>
+          <Text>
+            Disk:{' '}
+            <strong>
+              {workspaceConsumedQuota.disk.toFixed(1)}/
+              {workspaceTotalQuota.disk.toFixed(1)}Gi
+            </strong>{' '}
+            ({diskPct.toFixed(0)}%)
+          </Text>
         </Space>
       ),
     },
@@ -141,7 +179,13 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
           <span style={indicatorStyle(getResourceStatusColor(instancesPct))} />
           <span style={verticalDividerStyle} />
           <CloudOutlined className="warning-color-fg" />
-          <Text>Instances: <strong>{workspaceConsumedQuota.instances}/{workspaceTotalQuota.instances}</strong> ({instancesPct.toFixed(0)}%)</Text>
+          <Text>
+            Instances:{' '}
+            <strong>
+              {workspaceConsumedQuota.instances}/{workspaceTotalQuota.instances}
+            </strong>{' '}
+            ({instancesPct.toFixed(0)}%)
+          </Text>
         </Space>
       ),
     },
@@ -158,7 +202,13 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
             <span style={indicatorStyle(getResourceStatusColor(pct))} />
             <span style={verticalDividerStyle} />
             <ThunderboltOutlined style={{ color: '#722ed1' }} />
-            <Text>{cleanLabel}: <strong>{consumed}/{total}</strong> ({pct.toFixed(0)}%)</Text>
+            <Text>
+              {cleanLabel}:{' '}
+              <strong>
+                {consumed}/{total}
+              </strong>{' '}
+              ({pct.toFixed(0)}%)
+            </Text>
           </Space>
         ),
       };
@@ -166,8 +216,14 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
+    <div
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+    >
+      <Dropdown
+        menu={{ items: menuItems }}
+        trigger={['click']}
+        placement="bottomRight"
+      >
         <Button
           shape="circle"
           size="large"

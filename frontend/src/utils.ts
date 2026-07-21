@@ -2,9 +2,7 @@ import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import type { EnvironmentType, Phase2, Phase5 } from './generated-types';
 import { Role } from './generated-types';
 import type { ContainerStartupOptionsForm } from './components/workspaces/ModalCreateTemplate/types';
-import { 
-  VITE_APP_CUSTOM_RESOURCES,
-} from './env';
+import { VITE_APP_CUSTOM_RESOURCES } from './env';
 export type someKeysOf<T> = { [key in keyof T]?: T[key] };
 export enum WorkspaceRole {
   user = Role.User,
@@ -330,7 +328,9 @@ export const findKeyByValue = <T, K extends keyof unknown>(
  * @returns the number that represents the passed quantity in GiB (e.g. 2)
  */
 export const convertToGiB = (sizeStr: string): number => {
-  const match = sizeStr.trim().match(/^(\d+(?:\.\d+)?)(Ki|Mi|Gi|Ti|K|M|G|T)B?$/i);
+  const match = sizeStr
+    .trim()
+    .match(/^(\d+(?:\.\d+)?)(Ki|Mi|Gi|Ti|K|M|G|T)B?$/i);
   if (!match) {
     throw new Error('Invalid size string');
   }
@@ -389,7 +389,7 @@ export const camelize = (str: string) =>
 export const cleanupLabels = (s?: string) =>
   camelize(
     s?.replace('crownlabs.polito.it/', '').replace('crownlabsPolitoIt', '') ||
-    '',
+      '',
   );
 
 export function enumKeyFromVal<T extends Record<string, string | number>>(
@@ -436,7 +436,7 @@ spec:
     protocol: p.protocol.toUpperCase(), // Ensure uppercase protocol
   }));
 
-// Build YAML string with correct indentation (names are now sanitized, no quotes needed)
+  // Build YAML string with correct indentation (names are now sanitized, no quotes needed)
   const yamlPorts = portsFormatted
     .map(p => {
       return `    - name: ${p.name}
@@ -466,7 +466,10 @@ const getCustomResourcesConfig = (): Record<string, string> => {
   try {
     return JSON.parse(VITE_APP_CUSTOM_RESOURCES);
   } catch (error) {
-    console.error('Error parsing VITE_APP_CUSTOM_RESOURCES configuration:', error);
+    console.error(
+      'Error parsing VITE_APP_CUSTOM_RESOURCES configuration:',
+      error,
+    );
     return {};
   }
 };
@@ -480,7 +483,10 @@ export const getOriginalK8sKey = (key: string): string => {
 
   for (const originalK8sKey of Object.keys(customResources)) {
     // Dynamically convert Kubernetes key format (e.g., nvidia.com/gpu) to qlkube camelCase (e.g., nvidiaComGpu)
-    const computedCamelCase = originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
+    const computedCamelCase = originalK8sKey.replace(
+      /([./])([a-z])/g,
+      (_, __, letter) => letter.toUpperCase(),
+    );
 
     if (key === originalK8sKey || key === computedCamelCase) {
       return originalK8sKey;
@@ -498,7 +504,9 @@ export const getCamelCaseKey = (key: string): string => {
 
   for (const originalK8sKey of Object.keys(customResources)) {
     if (key === originalK8sKey) {
-      return originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) => letter.toUpperCase());
+      return originalK8sKey.replace(/([./])([a-z])/g, (_, __, letter) =>
+        letter.toUpperCase(),
+      );
     }
   }
   // Fallback: apply the regex transformation directly if the key is not in config

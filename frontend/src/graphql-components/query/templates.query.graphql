@@ -22,7 +22,7 @@ query workspaceTemplates($workspaceNamespace: String!) {
           disableControls
           rewriteURL
           persistent
-          containerStartupOptions{
+          containerStartupOptions {
             sourceArchiveURL
             contentPath
             startupArgs
