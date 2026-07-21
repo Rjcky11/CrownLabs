@@ -19,6 +19,7 @@ require (
 	github.com/onsi/gomega v1.37.0
 	github.com/prometheus/client_golang v1.23.0
 	github.com/prometheus/common v0.66.0
+	github.com/stretchr/testify v1.11.1
 	github.com/ti-mo/conntrack v0.6.0
 	github.com/ti-mo/netfilter v0.5.3
 	golang.org/x/crypto v0.52.0
