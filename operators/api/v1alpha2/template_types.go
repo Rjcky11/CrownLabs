@@ -15,6 +15,8 @@
 package v1alpha2
 
 import (
+	"encoding/json"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apicommon "github.com/netgroup-polito/CrownLabs/operators/api/common"
@@ -164,6 +166,26 @@ type EnvironmentResources struct {
 	// respect to the 'CPU' value. Essentially, this corresponds to the 'requests'
 	// specified for the actual pod representing the environment.
 	ReservedCPUPercentage uint32 `json:"reservedCPUPercentage"`
+}
+
+// TO DO : Remove this alias int64Flexible conversion method and only leave int64 once the production mutation webhook is updated.
+// UnmarshalJSON prevents method promotion issues and correctly unmarshals both ResourceSpec and EnvironmentResources fields.
+func (e *EnvironmentResources) UnmarshalJSON(data []byte) error {
+	// 1. Unmarshal embedded ResourceSpec (handles cpu string/int, memory, disk, etc.)
+	if err := json.Unmarshal(data, &e.ResourceSpec); err != nil {
+		return err
+	}
+
+	// 2. Unmarshal EnvironmentResources specific fields
+	var aux struct {
+		ReservedCPUPercentage uint32 `json:"reservedCPUPercentage,omitempty"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	e.ReservedCPUPercentage = aux.ReservedCPUPercentage
+	return nil
 }
 
 // ContainerStartupOpts specifies custom startup options for the created container,
