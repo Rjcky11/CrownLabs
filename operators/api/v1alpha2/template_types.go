@@ -168,8 +168,8 @@ type EnvironmentResources struct {
 	ReservedCPUPercentage uint32 `json:"reservedCPUPercentage"`
 }
 
-// TO DO : Remove this alias int64Flexible conversion method and only leave int64 once the production mutation webhook is updated.
-// UnmarshalJSON prevents method promotion issues and correctly unmarshals both ResourceSpec and EnvironmentResources fields.
+// UnmarshalJSON implements custom unmarshaling to prevent method promotion issues.
+// TODO: Remove this workaround once the production mutation webhook is updated.
 func (e *EnvironmentResources) UnmarshalJSON(data []byte) error {
 	// 1. Unmarshal embedded ResourceSpec (handles cpu string/int, memory, disk, etc.)
 	if err := json.Unmarshal(data, &e.ResourceSpec); err != nil {

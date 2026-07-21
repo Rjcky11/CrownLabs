@@ -145,8 +145,8 @@ type WorkspaceResourceQuota struct {
 	Instances int64 `json:"instances"`
 }
 
-// TO DO : Remove this alias int64Flexible conversion method and only leave int64 once the production mutation webhook is updated.
-// UnmarshalJSON prevents method promotion issues and correctly unmarshals both ResourceSpec and WorkspaceResourceQuota fields.
+// UnmarshalJSON implements custom unmarshaling to prevent method promotion issues.
+// TODO: Remove this workaround once the production mutation webhook is updated.
 func (w *WorkspaceResourceQuota) UnmarshalJSON(data []byte) error {
 	// 1. Unmarshal embedded ResourceSpec (handles cpu string/int, memory, disk, etc.)
 	if err := json.Unmarshal(data, &w.ResourceSpec); err != nil {
