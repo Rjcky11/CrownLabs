@@ -19,14 +19,6 @@ const subscriptions = [
     type: 'itPolitoCrownlabsV1alpha2Template',
     listMapping: null,
   },
-  {
-    api: 'apis',
-    group: 'crownlabs.polito.it',
-    version: 'v1alpha2',
-    resource: 'tenants',
-    type: 'itPolitoCrownlabsV1alpha2Tenant',
-    listMapping: null,
-  },
 ];
 
 module.exports = { subscriptions };

@@ -10,13 +10,6 @@ const wrappers = [
     queryFieldsRequired: ['name', 'namespace'],
     parents: ['itPolitoCrownlabsV1alpha2Instance'],
   },
-  {
-    type: 'itPolitoCrownlabsV1alpha1Workspace',
-    fieldWrapper: 'WorkspacesListItem',
-    nameWrapper: 'workspaceWrapperTenantV1alpha2',
-    queryFieldsRequired: ['name'],
-    parents: ['itPolitoCrownlabsV1alpha2Tenant'],
-  }
 ];
 
 module.exports = { wrappers };

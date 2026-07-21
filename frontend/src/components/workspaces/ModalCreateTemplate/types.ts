@@ -49,7 +49,7 @@ export type ContainerStartupOptionsForm = {
   contentPath: string;
   startupArgs: string[];
   EnforceWorkDir: boolean;
-}
+};
 
 export type ChildFormItem = {
   parentFormName: number;
