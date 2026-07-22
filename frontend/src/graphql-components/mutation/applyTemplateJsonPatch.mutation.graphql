@@ -27,7 +27,6 @@ mutation applyTemplateJsonPatch(
           contentPath
           startupArgs
           enforceWorkdir
-
         }
         environmentType
         resources {

@@ -41,7 +41,7 @@ export const EnvironmentList: FC<IEnvironmentLabelProps> = ({
   resources,
   sharedVolumes,
   isPersonal,
-  setInfoNumberTemplate
+  setInfoNumberTemplate,
 }) => {
   const form = Form.useFormInstance();
   const environments = Form.useWatch<TemplateFormEnv[] | undefined>(

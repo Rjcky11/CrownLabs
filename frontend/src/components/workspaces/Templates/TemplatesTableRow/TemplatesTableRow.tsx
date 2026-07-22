@@ -606,7 +606,8 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                     </div>
                     {(() => {
                       const singleOther = {
-                        ...template.environmentList?.[0]?.resources?.otherResources,
+                        ...template.environmentList?.[0]?.resources
+                          ?.otherResources,
                       };
                       return Object.entries(singleOther).map(([key, val]) => {
                         const numericVal = Number(val);
