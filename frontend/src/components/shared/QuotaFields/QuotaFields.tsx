@@ -153,15 +153,6 @@ const QuotaFields: FC<IQuotaFieldsProps> = ({
                         >
                           AMD GPU
                         </Select.Option>
-                        <Select.Option
-                          value="custom.resource/example"
-                          disabled={
-                            selectedKeys.includes('custom.resource/example') &&
-                            currentFieldKey !== 'custom.resource/example'
-                          }
-                        >
-                          Custom Resource Example
-                        </Select.Option>
                       </Select>
                     </Form.Item>
                     <Form.Item

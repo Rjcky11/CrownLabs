@@ -43,13 +43,16 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
 
   // Helper function to safely process utilization percentages
   const calculatePercentage = (consumed: number, total: number): number => {
-    if (!total || total === 0) return 0;
+    if (!total || total === 0) {
+      // If the limit is 0 but resources are consumed, treat as 100% (critical) to avoid green status
+      return consumed > 0 ? 100 : 0;
+    }
     return (consumed / total) * 100;
   };
 
   // Helper function to determine threshold status color based on resource utilization
   const getResourceStatusColor = (percentage: number): string => {
-    if (percentage == 100) return '#ff4d4f';
+    if (percentage >= 100) return '#ff4d4f';
     if (percentage >= 80) return '#faad14';
     if (percentage >= 50) return '#fff652';
     return '#52c41a';
@@ -57,7 +60,7 @@ const QuotaDisplay: FC<IQuotaDisplayProps> = ({ workspaceName }) => {
 
   // Helper function to determine the hover tooltip message based on resource utilization
   const getResourceStatusMessage = (percentage: number): string => {
-    if (percentage == 100) return 'Resource usage: critical';
+    if (percentage >= 100) return 'Resource usage: critical';
     if (percentage >= 80) return 'Resource usage: high';
     if (percentage >= 50) return 'Resource usage: moderate';
     return 'Resource usage: low';
