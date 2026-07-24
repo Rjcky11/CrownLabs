@@ -96,7 +96,8 @@ const TenantPersonalWorkspaceSettings: FC<
     }
   };
 
-  const numberValidator: RuleRender = f => {
+  // Strict validator for CPU, RAM, Instances (must be >= 1)
+  const positiveNumberValidator: RuleRender = f => {
     if (f.getFieldValue('enabled')) {
       return {
         validator(_: RuleObject, value: number) {
@@ -104,6 +105,26 @@ const TenantPersonalWorkspaceSettings: FC<
             return Promise.resolve();
           }
           return Promise.reject(new Error(`Value must be at least 1`));
+        },
+      };
+    } else {
+      return {
+        validator(_: RuleObject, _value: number) {
+          return Promise.resolve();
+        },
+      };
+    }
+  };
+
+  // Flexible validator for Disk (allows 0)
+  const nonNegativeNumberValidator: RuleRender = f => {
+    if (f.getFieldValue('enabled')) {
+      return {
+        validator(_: RuleObject, value: number) {
+          if (value >= 0) {
+            return Promise.resolve();
+          }
+          return Promise.reject(new Error(`Value must be at least 0`));
         },
       };
     } else {
@@ -159,10 +180,10 @@ const TenantPersonalWorkspaceSettings: FC<
         disabled={!isEnabled}
         validateTrigger="onBlur"
         rules={{
-          cpu: [numberValidator],
-          memory: [numberValidator],
-          instances: [numberValidator],
-          disk: [numberValidator],
+          cpu: [positiveNumberValidator],
+          memory: [positiveNumberValidator],
+          instances: [positiveNumberValidator],
+          disk: [nonNegativeNumberValidator],
           otherResources: [
             () => ({
               validator(_, value) {
